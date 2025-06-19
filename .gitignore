@@ -1,0 +1,24 @@
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+
+# Jupyter notebooks (test only)
+test.ipynb
+
+# Environment files
+.env
+
+# OS files
+.DS_Store
+
+# Virtual environments
+venv/
+.env/
+.envrc
+
+# Logs
+*.log
+
+# Editor settings
+.vscode/
+.idea/
