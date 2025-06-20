@@ -1,8 +1,8 @@
 -- Create table 'zhaoxuelu_comments' to store user comments on the drama 'Zhaoxuelu'.
 -- Ensures uniqueness by combining user_id and comment timestamp (create_time).
 
-CREATE TABLE public.zhaoxuelu_comments (
-    user_id BIGINT NOT NULL,
+CREATE TABLE public.lizhi_comments (
+    user_id VARCHAR(20) NOT NULL,
     user_name VARCHAR(60),
     votes INTEGER,
     status VARCHAR(10),
@@ -12,26 +12,8 @@ CREATE TABLE public.zhaoxuelu_comments (
     user_comment TEXT,
     insert_time TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
     
-    CONSTRAINT unique_user_time UNIQUE (user_id, create_time)
+    CONSTRAINT unique_lizhi_user_time UNIQUE (user_id, create_time)
 );
-
---Automatically truncates the 'user_comment' field to 100 characters 
---if it exceeds that length, before inserting into the table.
-
-CREATE OR REPLACE FUNCTION truncate_to_100_chars()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.user_comment := LEFT(NEW.user_comment, 100);
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
---Invokes the truncate_long_comment() function before each INSERT
-
-CREATE TRIGGER trg_truncate_full_text
-BEFORE INSERT OR UPDATE ON zhaoxuelu_comments
-FOR EACH ROW
-EXECUTE FUNCTION truncate_to_100_chars();
 
 --Delete data in the table
 
@@ -39,9 +21,30 @@ TRUNCATE TABLE public.zhaoxuelu_comments;
 
 --Delete table
 
-DROP TABLE public.zhaoxuelu_comments;
+DROP TABLE public.lizhi_comments;
 
 -- Create 'filter_comments' table with the same structure as 'zhaoxuelu_comments'
 -- (includes all columns, constraints, and indexes).
 
 CREATE TABLE public.filter_comments (LIKE public.zhaoxuelu_comments INCLUDING ALL);
+
+
+-- Change user_id type from BIGINT to VARCHAR
+ALTER TABLE lizhi_comments
+ALTER COLUMN user_id TYPE VARCHAR(20);
+
+
+-- Check if there is CONSTRAINT
+SELECT conname, contype 
+FROM pg_constraint 
+WHERE conname = 'unique_lizhi_user_time';
+
+
+-- Add again CONSTRAINT
+ALTER TABLE filter_comments DROP CONSTRAINT IF EXISTS unique_user_time;
+
+ALTER TABLE filter_comments 
+ADD CONSTRAINT unique_filter_user_time UNIQUE (user_id, create_time);
+
+
+

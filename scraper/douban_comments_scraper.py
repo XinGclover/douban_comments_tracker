@@ -6,20 +6,12 @@ import psycopg2
 import os
 from dotenv import load_dotenv
 import random
+from config import TABLE_NAME, BASE_URL
 
 load_dotenv() 
 
-
-FILTER = 36553916
-LIZHI = 35651341
-ZHAOXUELU = 36317401
-
-table_name = "filter_comments"
-# table_name = "lizhi_comments"
-# table_name = "zhaoxuelu_comments"
-
-BASE_URL_FIRST_PAGE = "https://movie.douban.com/subject/{}/comments?limit=20&status=F&sort=new_score"
-BASE_URL_OTHER_PAGES = "https://movie.douban.com/subject/{}/comments?start={}&limit=20&status=P&sort=new_score"
+BASE_URL_FIRST_PAGE = "{}/comments?limit=20&status=F&sort=new_score"
+BASE_URL_OTHER_PAGES = "{}/comments?start={}&limit=20&status=P&sort=new_score"
 
 def get_db_conn():
     """
@@ -35,6 +27,9 @@ def get_db_conn():
     )
 
 def extract_rating(block):
+    """ Extract rating from the comment block.
+    :param block: BeautifulSoup object representing a comment block
+    :return: int, rating out of 10 or None if not found """
     rating_tag = block.select_one('.rating')
     if rating_tag:
         rating_class = rating_tag.get('class', [])
@@ -49,6 +44,11 @@ def extract_rating(block):
 
 
 def parse_comment_block(block):
+    """ Parse a single comment block and extract relevant data.
+    :param block: BeautifulSoup object representing a comment block
+    :return: dict, contains user_id, user_name, votes, status, rating, location, time, comment """
+    if not block:
+        return {}   
     votes = block.select_one('.vote-count').text.strip()
     user_id = block.select_one('a[data-id]')['data-id']
     user_name = block.select_one('.comment-info a').text.strip()
@@ -69,16 +69,27 @@ def parse_comment_block(block):
         "comment": comment,
     }
 
-def get_url(page_num, drama_id):
+def get_url(page_num, drama_url):
+    """ Generate the URL for fetching comments based on the page number.
+    :param page_num: int, page number to fetch, 0 for first page
+    :param drama_url: str, the drama URL to fetch comments from
+    :return: str, the complete URL for fetching comments
+    """
     if page_num == 0:
-        return BASE_URL_FIRST_PAGE.format(drama_id)
+        return BASE_URL_FIRST_PAGE.format(drama_url)
     else:
         start = page_num * 20
-        return BASE_URL_OTHER_PAGES.format(drama_id, start) 
+        return BASE_URL_OTHER_PAGES.format(drama_url, start) 
 
 
-def fetch_comments_page(page_num=0, headers=None, drama_id=FILTER):
-    url = get_url(page_num, drama_id)
+def fetch_comments_page(page_num=0, headers=None, drama_url=BASE_URL):
+    """ Fetch comments from a specific page of the drama.
+    :param page_num: int, page number to fetch, 0 for first page
+    :param headers: dict, HTTP headers to use
+    :param drama_url: str, the drama URL to fetch comments from
+    :return: list of dicts, each dict contains comment data
+    """
+    url = get_url(page_num, drama_url)
     print(f"[{datetime.now()}] Fetching: {url}")
 
     try:
@@ -91,29 +102,30 @@ def fetch_comments_page(page_num=0, headers=None, drama_id=FILTER):
         blocks = block.find_all("div", class_="comment")
         return [parse_comment_block(b) for b in blocks]
 
-    except Exception as e:
+    except (requests.exceptions.RequestException, psycopg2.Error) as e:
         print("Error:", e)
         return []
-    
+
+
 def insert_single_comment(conn, comment_dict):
+    """ Insert a single comment into the database.
+    :param conn: psycopg2 connection object
+    :param comment_dict: dict, contains comment data to insert
+    :return: bool, True if insert was successful, False otherwise
     """
-    Insert a single comment into the PostgreSQL database, automatically skipping abnormal data.
-    :param conn: psycopg2 database connection
-    :param comment_dict: dict, single comment
-    """
-    sql = """
-    INSERT INTO {} (
+    sql = f"""
+    INSERT INTO {TABLE_NAME} (
         user_id, user_name, votes, status, rating, user_location, create_time, user_comment
     )
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     ON CONFLICT (user_id, create_time) DO NOTHING   
-    """.format(table_name)
+    """
 
     try:
         rating_raw = comment_dict.get('rating')
         rating = int(rating_raw) if rating_raw is not None else None
         params = (
-            int(comment_dict.get('user_id')),
+            str(comment_dict.get('user_id')).strip(),
             str(comment_dict.get('user_name', '')).strip(),
             int(comment_dict.get('votes', 0)),
             str(comment_dict.get('status', '')).strip(),
@@ -127,7 +139,7 @@ def insert_single_comment(conn, comment_dict):
             cursor.execute(sql, params)
         conn.commit()
         return cursor.rowcount == 1
-    except Exception as e:
+    except (psycopg2.Error, ValueError, KeyError) as e:
         conn.rollback()
         print(f"Insert failed: {e}")
         print("Wrong data:", comment_dict)
@@ -135,6 +147,12 @@ def insert_single_comment(conn, comment_dict):
 
 
 def main_loop(start_page=0, max_pages=10000, sleep_range=(50, 70)):
+    """ Main loop to fetch and insert comments into the database.
+    :param start_page: int, page number to start fetching from
+    :param max_pages: int, maximum number of pages to fetch
+    :param sleep_range: tuple, range of seconds to sleep between requests
+    """
+    
     conn = get_db_conn()
     cookies = os.getenv("DOUBAN_COOKIE")
     headers = { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
@@ -146,7 +164,7 @@ def main_loop(start_page=0, max_pages=10000, sleep_range=(50, 70)):
     for page in range(start_page, max_pages):
         try:
             print(f"\n📄 Fetching comments on page {page}...")
-            comments = fetch_comments_page(page, headers=headers, drama_id=FILTER)
+            comments = fetch_comments_page(page, headers=headers, drama_url=BASE_URL)
             print(f"📄 Fetched {len(comments)} comments on page {page}")
             if not comments:
                 print("⚠️ No more comments, may be limited or reached the end")
@@ -162,7 +180,7 @@ def main_loop(start_page=0, max_pages=10000, sleep_range=(50, 70)):
 
             print(f"✅ Inserted: {inserted},Skip: {skipped}")
             time.sleep(random.uniform(*sleep_range))
-        except Exception as e:
+        except (requests.exceptions.RequestException, psycopg2.Error) as e:
             print("❌ Page crawl failed:", e)
             time.sleep(10)
 
