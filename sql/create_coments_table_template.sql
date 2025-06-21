@@ -1,7 +1,7 @@
 -- Create table 'zhaoxuelu_comments' to store user comments on the drama 'Zhaoxuelu'.
 -- Ensures uniqueness by combining user_id and comment timestamp (create_time).
 
-CREATE TABLE public.lizhi_comments (
+CREATE TABLE public.huanyu_comments (
     user_id VARCHAR(20) NOT NULL,
     user_name VARCHAR(60),
     votes INTEGER,
@@ -12,7 +12,7 @@ CREATE TABLE public.lizhi_comments (
     user_comment TEXT,
     insert_time TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
     
-    CONSTRAINT unique_lizhi_user_time UNIQUE (user_id, create_time)
+    CONSTRAINT unique_huanyu_user_time UNIQUE (user_id, create_time)
 );
 
 --Delete data in the table
@@ -40,6 +40,11 @@ ALTER TABLE filter_comments DROP CONSTRAINT IF EXISTS unique_user_time;
 
 ALTER TABLE filter_comments 
 ADD CONSTRAINT unique_filter_user_time UNIQUE (user_id, create_time);
+
+
+--daram name: filter, zhaoxuelu,lizhi，huanyu
+
+
 
 
 
