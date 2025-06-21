@@ -29,11 +29,6 @@ DROP TABLE public.lizhi_comments;
 CREATE TABLE public.filter_comments (LIKE public.zhaoxuelu_comments INCLUDING ALL);
 
 
--- Change user_id type from BIGINT to VARCHAR
-ALTER TABLE lizhi_comments
-ALTER COLUMN user_id TYPE VARCHAR(20);
-
-
 -- Check if there is CONSTRAINT
 SELECT conname, contype 
 FROM pg_constraint 

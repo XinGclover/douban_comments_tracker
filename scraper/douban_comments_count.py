@@ -17,20 +17,28 @@ def extract_movie_stats(drama_url, headers=None):
     def extract_count(soup, pattern, selector=None):
         try:
             if selector:
-                tag = soup.select_one(selector)
+                # If the selector is for comments, handle it separately 
+                if selector == 'a[href*="comments?status=P"]':
+                    tag = soup.find('a', href=re.compile(r'comments\?status=[PF]'))
+                else:
+                    tag = soup.select_one(selector)
+                # If the tag is not found, return None
                 if tag is None:
                     print(f"⚠️ Selector not found: {selector}")
                     return None
+                # Extract text from the tag 
                 text = tag.get_text(strip=True)
             else:
                 text = soup.get_text()
-
+            # Use regex to find the count in the text 
             match = re.search(pattern, text)
             if match:
-                return int(match.group(1).replace(',', '').replace(' ', ''))
+                raw_value = match.group(1).replace(',', '').replace(' ', '')
+                return safe_number(raw_value) 
             else:
                 print(f"⚠️ Pattern not matched: {pattern}")
                 return None
+            
         except (AttributeError, TypeError, re.error) as e:
             print(f"❌ Error extracting count: {e}")
             return None
@@ -88,7 +96,7 @@ def safe_float_percent(value):
         return None
 
 
-def insert_movie_stats(movie_stats, conn):
+def insert_movie_stats(movie_stats, db_conn):
     """ Inserts movie statistics into the database.
     :param movie_stats: dict containing movie statistics
     :param conn: psycopg2 connection object
@@ -132,9 +140,9 @@ def insert_movie_stats(movie_stats, conn):
         total_discussions      
     )
 
-    with conn.cursor() as cursor:
+    with db_conn.cursor() as cursor:
         cursor.execute(sql, params)
-    conn.commit()
+    db_conn.commit()
     print("✅ Inserted movie stats at", insert_time)
 
 
