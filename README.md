@@ -1,6 +1,6 @@
-# ❄️ Zhao Xue Lu Comment Tracking and Analysis Project #
+# ❄️ Drama Comment Tracking and Analysis Project #
 
-This project aims to continuously scrape the latest short comments and user information for the Chinese drama Zhao Xue Lu from Douban, store them in a local PostgreSQL database, and later analyze user rating behavior to detect astroturfing activities, build fan profiles, and track public opinion trends.
+This project aims to continuously scrape the latest short comments and user information for the Chinese drama from Douban, store them in a local PostgreSQL database, and later analyze user rating behavior to detect astroturfing activities, build fan profiles, and track public opinion trends.
 
 ### 🎯 Project Objectives ###
 ⏱ High-frequency scraping: Scrape the latest Douban short comments every hour starting from the show's release date
@@ -46,8 +46,14 @@ Uses temporal patterns, user activity, and comment sentiment to identify potenti
 
 
 
-### 🔐 Privacy & Compliance ###
-This project is for academic and research purposes only.
-All scraped content is publicly available on Douban.
-No personal or sensitive user data is shared or exposed outside the research scope.
-User identifiers (e.g., user_id) are used strictly for behavior pattern analysis and not for any form of profiling or distribution.
+## Disclaimer
+
+This project is intended **for educational and research purposes only**.  
+The code is provided "as is" without any guarantees or warranties.
+
+**Important:**  
+- This repository does **not** include or distribute any data scraped from third-party websites.  
+- Users are responsible for complying with the terms of service and robots.txt policies of any websites they scrape.  
+- The author does not encourage or endorse any unlawful or unethical use of this code.
+
+By using this code, you agree to use it responsibly and ethically.
