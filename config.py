@@ -3,26 +3,23 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DOUBAN_DRAMA_IDS = {
-    "FILTER" : "36553916",
-    "LIZHI" : "35651341",
-    "ZHAOXUELU" : "36317401"
-}
-
 DOUBAN_DRAMAS = {
     "ZHAOXUELU": {
         "id": "36317401",
         "table": "zhaoxuelu_comments",
+        "count_table": "zhaoxuelu_comments_count",
         "title": "朝雪录"
     },
     "LIZHI": {
         "id": "35651341",
         "table": "lizhi_comments",
+        "count_table": "lizhi_comments_count",
         "title": "长安的荔枝"
     },
     "FILTER": {
         "id": "36553916",
         "table": "filter_comments",
+        "count_table": "filter_comments_count",
         "title": "滤镜"
     }
 }
@@ -39,5 +36,15 @@ if not drama_info:
 DOUBAN_DRAMA_ID = drama_info["id"]
 TABLE_NAME = drama_info["table"]
 DRAMA_TITLE = drama_info["title"]
+COUNT_TABLE_NAME = drama_info["count_table"]
 
 BASE_URL = f"https://movie.douban.com/subject/{DOUBAN_DRAMA_ID}/"
+
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "zh-CN,zh;q=0.9",
+    "Connection": "keep-alive",
+    "Cookie": os.getenv("DOUBAN_COOKIE")
+}
+
