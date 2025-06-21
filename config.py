@@ -5,22 +5,29 @@ load_dotenv()
 
 DOUBAN_DRAMAS = {
     "ZHAOXUELU": {
+        "title": "朝雪录", 
         "id": "36317401",
         "table": "zhaoxuelu_comments",
-        "count_table": "zhaoxuelu_comments_count",
-        "title": "朝雪录"
+        "count_table": "zhaoxuelu_comments_count"  
     },
     "LIZHI": {
+        "title": "长安的荔枝", 
         "id": "35651341",
         "table": "lizhi_comments",
         "count_table": "lizhi_comments_count",
-        "title": "长安的荔枝"
+        
     },
     "FILTER": {
+        "title": "滤镜",
         "id": "36553916",
         "table": "filter_comments",
-        "count_table": "filter_comments_count",
-        "title": "滤镜"
+        "count_table": "filter_comments_count",        
+    },
+    "HUANYU": {
+        "title": "焕羽", 
+        "id": "36455107",
+        "table": "huanyu_comments",
+        "count_table": "huanyu_comments_count",
     }
 }
 
