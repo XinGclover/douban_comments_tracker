@@ -1,6 +1,6 @@
 --Create table to store daily summary statistics of the Douban drama 
 
-CREATE TABLE public.zhaoxuelu_comments_count (
+CREATE TABLE public.filter_comments_count (
 	insert_time TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), 
 	rating NUMERIC(3,1),
 	rating_people INTEGER,                        -- Number of people who rated
@@ -13,10 +13,10 @@ CREATE TABLE public.zhaoxuelu_comments_count (
     total_reviews INTEGER,                        -- Number of long comments
     total_discussions INTEGER,                    -- Discussion group size    
 	
-	CONSTRAINT zhaoxuelu_unique_time UNIQUE (insert_time)
+	CONSTRAINT filter_unique_time UNIQUE (insert_time)
 );
 
-DROP TABLE public.zhaoxuelu_comments_count;
+DROP TABLE public.filter_comments_count;
 
 --table name: filter_comments_count, zhaoxuelu_comments_count,lizhi_comments_count
 --constraint name: filter_unique_time, zhaoxuelu_unique_time,lizhi_unique_time
