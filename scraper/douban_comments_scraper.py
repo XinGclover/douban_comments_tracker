@@ -3,28 +3,13 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 import time
 import psycopg2
-import os
-from dotenv import load_dotenv
 import random
-from config import TABLE_NAME, BASE_URL
-
-load_dotenv() 
+from config import TABLE_NAME, BASE_URL, HEADERS
+from db import get_db_conn
 
 BASE_URL_FIRST_PAGE = "{}/comments?limit=20&status=F&sort=new_score"
 BASE_URL_OTHER_PAGES = "{}/comments?start={}&limit=20&status=P&sort=new_score"
 
-def get_db_conn():
-    """
-    Get PostgreSQL database connection
-    :return: psycopg2 connection object
-    """
-    return psycopg2.connect(
-        dbname=os.getenv('DB_NAME'),
-        user=os.getenv('DB_USER'),
-        password=os.getenv('DB_PASSWORD'),
-        host=os.getenv('DB_HOST'),
-        port=os.getenv('DB_PORT')
-    )
 
 def extract_rating(block):
     """ Extract rating from the comment block.
@@ -153,18 +138,13 @@ def main_loop(start_page=0, max_pages=10000, sleep_range=(50, 70)):
     :param sleep_range: tuple, range of seconds to sleep between requests
     """
     
-    conn = get_db_conn()
-    cookies = os.getenv("DOUBAN_COOKIE")
-    headers = { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
-    "Cookie": cookies
-}
-    
+    conn = get_db_conn()   
     inserted = 0
     skipped = 0
     for page in range(start_page, max_pages):
         try:
             print(f"\n📄 Fetching comments on page {page}...")
-            comments = fetch_comments_page(page, headers=headers, drama_url=BASE_URL)
+            comments = fetch_comments_page(page, headers=HEADERS, drama_url=BASE_URL)
             print(f"📄 Fetched {len(comments)} comments on page {page}")
             if not comments:
                 print("⚠️ No more comments, may be limited or reached the end")

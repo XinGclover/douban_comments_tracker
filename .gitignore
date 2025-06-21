@@ -195,3 +195,7 @@ cython_debug/
 
 # Jupyter notebooks (test only)
 test.ipynb
+
+
+# macOS files
+.DS_Store
