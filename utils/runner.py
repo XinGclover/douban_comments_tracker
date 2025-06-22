@@ -1,4 +1,4 @@
-#import logging
+import logging
 from datetime import datetime, timedelta
 from utils.common import safe_sleep
 
@@ -9,11 +9,11 @@ def run_forever(main_loop_func):
     """ 
     while True:
         try:
-            print("🚀 Starting a new fetch cycle...")
+            logging.info("🚀 Starting a new fetch cycle...")
             main_loop_func()
             safe_sleep(90, 120)
         except ValueError as e:  # Replace with a specific exception type
-            print(f"🔥 Unexpected crash in outer loop: {e}")
+            logging.error("🔥 Unexpected crash in outer loop: %s", e)
             safe_sleep(60, 90)
 
 
@@ -24,14 +24,14 @@ def run_for_rounds(main_loop_func, n_rounds=10):
     """ 
     for round_num in range(1, n_rounds + 1):
         try:
-            print(f"🚀 [Round {round_num}/{n_rounds}] Starting fetch...")
+            logging.info("🚀 [Round %d/%d] Starting fetch...", round_num, n_rounds)
             main_loop_func()
             safe_sleep(90, 120)
         except ValueError as e:  # Replace with a specific exception type
-            print(f"🔥 Round {round_num} failed: {e}")
+            logging.error("🔥 Round %d failed: %s", round_num, e)
             safe_sleep(60, 90)
 
-    print("🛑 All rounds complete, exiting.")
+    logging.info("🛑 All rounds complete, exiting.")
 
 
 def run_for_duration(main_loop_func, minutes=5):
@@ -43,11 +43,11 @@ def run_for_duration(main_loop_func, minutes=5):
 
     while datetime.now() < end_time:
         try:
-            print("🚀 Starting a new fetch cycle...")
+            logging.info("🚀 Starting a new fetch cycle...")
             main_loop_func()
             safe_sleep(90, 120)
         except ValueError as e:  # Replace with a specific exception type
-            print(f"🔥 Unexpected crash: {e}")
+            logging.error("🔥 Unexpected crash: %s", e)
             safe_sleep(60, 90)
 
-    print("🛑 Time limit reached, exiting.")
+    logging.info("🛑 Time limit reached, exiting.")

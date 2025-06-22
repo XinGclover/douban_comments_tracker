@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 
 import requests
 from bs4 import BeautifulSoup
@@ -8,6 +9,9 @@ from utils.common import safe_float_percent, safe_number
 from utils.config import BASE_URL, COUNT_TABLE_NAME
 from utils.config_loader import get_headers
 from utils.html_tools import extract_count
+from utils.logger import setup_logger 
+
+setup_logger("logs/douban_comments_count.log", logging.INFO)  
 
 
 def extract_movie_stats(drama_url, headers=None):
@@ -91,7 +95,7 @@ def insert_movie_stats(movie_stats, db_conn):
     with db_conn.cursor() as cursor:
         cursor.execute(sql, params)
     db_conn.commit()
-    print("✅ Inserted movie stats at", insert_time)
+    logging.info("Inserted movie stats at %s with rating %s and %s comments.", insert_time, rating, total_comments)
 
 
 if __name__ == "__main__":
