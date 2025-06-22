@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from utils.common import safe_sleep
 
 
-def run_forever(main_loop_func):
+def run_forever(main_loop_func, sleep_range=(90, 120)):
     """ Continuously runs the main loop function, handling exceptions and sleeping between cycles.
     :param main_loop_func: function to run in the loop
     """ 
@@ -11,13 +11,13 @@ def run_forever(main_loop_func):
         try:
             logging.info("🚀 Starting a new fetch cycle...")
             main_loop_func()
-            safe_sleep(90, 120)
+            safe_sleep(*sleep_range)  # Sleep for a random duration between the specified range
         except ValueError as e:  # Replace with a specific exception type
             logging.error("🔥 Unexpected crash in outer loop: %s", e)
             safe_sleep(60, 90)
 
 
-def run_for_rounds(main_loop_func, n_rounds=10):
+def run_for_rounds(main_loop_func, n_rounds=10, sleep_range=(90, 120)):
     """ Runs the main loop function for a specified number of rounds, handling exceptions and sleeping between rounds.
     :param main_loop_func: function to run in each round
     :param n_rounds: int, number of rounds to run
@@ -26,7 +26,7 @@ def run_for_rounds(main_loop_func, n_rounds=10):
         try:
             logging.info("🚀 [Round %d/%d] Starting fetch...", round_num, n_rounds)
             main_loop_func()
-            safe_sleep(90, 120)
+            safe_sleep(*sleep_range) 
         except ValueError as e:  # Replace with a specific exception type
             logging.error("🔥 Round %d failed: %s", round_num, e)
             safe_sleep(60, 90)
@@ -34,7 +34,7 @@ def run_for_rounds(main_loop_func, n_rounds=10):
     logging.info("🛑 All rounds complete, exiting.")
 
 
-def run_for_duration(main_loop_func, minutes=5):
+def run_for_duration(main_loop_func, minutes=5, sleep_range=(90, 120)):
     """ Runs the main loop function for a specified duration, handling exceptions and sleeping between cycles.
     :param main_loop_func: function to run in each cycle
     :param hours: int, duration in hours to run the loop
@@ -45,7 +45,7 @@ def run_for_duration(main_loop_func, minutes=5):
         try:
             logging.info("🚀 Starting a new fetch cycle...")
             main_loop_func()
-            safe_sleep(90, 120)
+            safe_sleep(*sleep_range)
         except ValueError as e:  # Replace with a specific exception type
             logging.error("🔥 Unexpected crash: %s", e)
             safe_sleep(60, 90)
