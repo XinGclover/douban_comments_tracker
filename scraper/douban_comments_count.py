@@ -1,17 +1,23 @@
 from datetime import datetime
 import logging
+import time
 
+import psycopg2
 import requests
 from bs4 import BeautifulSoup
 
 from db import get_db_conn
-from utils.common import safe_float_percent, safe_number
+from utils.common import safe_float_percent, safe_number, wait_until_next_even_hour
 from utils.config import BASE_URL, COUNT_TABLE_NAME
 from utils.config_loader import get_headers
 from utils.html_tools import extract_count
 from utils.logger import setup_logger 
 
-setup_logger("logs/douban_comments_count.log", logging.INFO)  
+setup_logger("logs/douban_comments_count.log", logging.INFO)
+
+TASK_INTERVAL_HOURS = 2     # Interval in hours to run the task
+CHECK_INTERVAL_SECONDS = 1200   # Time to wait between checks for the next task
+POST_TASK_SLEEP_SECONDS = 90    # Sleep time after each task completion     
 
 
 def extract_movie_stats(drama_url, headers=None):
@@ -97,11 +103,34 @@ def insert_movie_stats(movie_stats, db_conn):
     db_conn.commit()
     logging.info("Inserted movie stats at %s with rating %s and %s comments.", insert_time, rating, total_comments)
 
-
-if __name__ == "__main__":
+def main_loop():   
+    """ Main loop to fetch and insert movie statistics into the database.
+    :return: None
+    """
     request_headers = get_headers() 
-    stats = extract_movie_stats(BASE_URL,request_headers)
+    stats = extract_movie_stats(BASE_URL, request_headers)
+    
+    if not stats:
+        logging.error("Failed to extract movie stats from %s", BASE_URL)
+        return
+
     conn = get_db_conn()
     insert_movie_stats(stats, conn)
     conn.close()
+    logging.info("Movie stats inserted successfully.")
+
+
+if __name__ == "__main__":
+    main_loop()  # Run once immediately for testing
+    while True:
+        wait_until_next_even_hour(TASK_INTERVAL_HOURS, CHECK_INTERVAL_SECONDS)  # Wait until the next even hour
+        logging.info("Starting to fetch movie stats at %s", datetime.now())
+        try:
+            main_loop()
+        except (requests.RequestException, psycopg2.Error) as e:
+            logging.error("Error occurred while fetching movie stats: %s", e)
+        logging.info("Fetch cycle complete at %s", datetime.now())
+        # Sleep for 1 hour before the next cycle
+        time.sleep(POST_TASK_SLEEP_SECONDS)
+    
 

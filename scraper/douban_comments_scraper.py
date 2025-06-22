@@ -14,9 +14,12 @@ from utils.logger import setup_logger
 
 setup_logger("logs/douban_comments_scraper.log", logging.INFO)  
 
-BASE_URL_FIRST_PAGE = "{}/comments?limit=20&status=P&sort=time"
-BASE_URL_OTHER_PAGES = "{}/comments?start={}&limit=20&status=P&sort=time"
+BASE_URL_FIRST_PAGE = "{}/comments?limit=20&status=P&sort=time"  # URL for the first page of comments
+BASE_URL_OTHER_PAGES = "{}/comments?start={}&limit=20&status=P&sort=time"   # URL for subsequent pages of comments
 
+SLEEP_RANGE = (60, 90)  # Sleep time between requests
+N_ROUNDS = 5  # Number of rounds to run the scraper
+RUN_TIME_MINUTES = 10  # Total runtime in minutes for the scraper
 
 def extract_rating(block):
     """ Extract rating from the comment block.
@@ -176,9 +179,9 @@ def main_loop(start_page=0, max_pages=10):
     logging.info("\n✨ %d total inserted, %d skipped", inserted, skipped)
 
 if __name__ == "__main__":
-    # run_forever(lambda: main_loop(0, 5))
-    # run_for_rounds(lambda: main_loop(0, 5), n_rounds=2)
-    run_for_duration(lambda: main_loop(0, 5), minutes=8)     
+    # run_forever(lambda: main_loop(0, 5), sleep_range=(SLEEP_RANGE[0], SLEEP_RANGE[1]))
+    # run_for_rounds(lambda: main_loop(0, 5), n_rounds=N_ROUNDS, sleep_range=(SLEEP_RANGE[0], SLEEP_RANGE[1]))
+    run_for_duration(lambda: main_loop(0, 5), minutes=RUN_TIME_MINUTES, sleep_range=(SLEEP_RANGE[0], SLEEP_RANGE[1]))     
 
 
 
