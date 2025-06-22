@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 
 import psycopg2
 import requests
@@ -9,6 +10,9 @@ from utils.common import safe_sleep
 from utils.config import BASE_URL, TABLE_NAME
 from utils.config_loader import get_headers
 from utils.runner import run_for_rounds, run_for_duration, run_forever 
+from utils.logger import setup_logger 
+
+setup_logger("logs/douban_comments_scraper.log", logging.INFO)  
 
 BASE_URL_FIRST_PAGE = "{}/comments?limit=20&status=P&sort=time"
 BASE_URL_OTHER_PAGES = "{}/comments?start={}&limit=20&status=P&sort=time"
@@ -78,12 +82,12 @@ def fetch_comments_page(page_num=0, headers=None, drama_url=BASE_URL):
     :return: list of dicts, each dict contains comment data
     """
     url = get_url(page_num, drama_url)
-    print(f"[{datetime.now()}] Fetching: {url}")
+    logging.info("[%s] Fetching: %s", datetime.now(), url)
 
     try:
         resp = requests.get(url, headers=headers, timeout=10)
         if resp.status_code != 200:
-            print(f"Failed: {resp.status_code}")
+            logging.error("Failed: %s", resp.status_code)
             return []
 
         block = BeautifulSoup(resp.text, "html.parser")
@@ -91,7 +95,7 @@ def fetch_comments_page(page_num=0, headers=None, drama_url=BASE_URL):
         return [parse_comment_block(b) for b in blocks]
 
     except (requests.exceptions.RequestException, psycopg2.Error) as e:
-        print("Error:", e)
+        logging.error("Error: %s", e)
         return []
 
 
@@ -129,8 +133,8 @@ def insert_single_comment(conn, comment_dict):
         return cursor.rowcount == 1
     except (psycopg2.Error, ValueError, KeyError) as e:
         conn.rollback()
-        print(f"Insert failed: {e}")
-        print("Wrong data:", comment_dict)
+        logging.error("Insert failed: %s", e)
+        logging.info("Wrong data: %s", comment_dict)
         return False
 
 
@@ -147,29 +151,29 @@ def main_loop(start_page=0, max_pages=10):
     skipped = 0
     for page in range(start_page, max_pages):
         try:
-            print(f"\n📄 Fetching comments on page {page}...")
+            logging.info("\n📄 Fetching comments on page %s...", page)
             comments = fetch_comments_page(page, headers=request_headers, drama_url=BASE_URL)
-            print(f"📄 Fetched {len(comments)} comments on page {page}")
+            logging.info("📄 Fetched %d comments on page %d", len(comments), page)
             if not comments:
-                print("⚠️ No more comments, may be limited or reached the end")
+                logging.warning("⚠️ No more comments, may be limited or reached the end")
                 break
             
             for c in comments:
                 success = insert_single_comment(conn, c)
                 if success:
                     inserted += 1
-                    print(f"✅ Insert user_id={c['user_id']}")
+                    logging.info("✅ Insert user_id=%s", c['user_id'])
                 else:
                     skipped += 1
 
-            print(f"✅ Inserted: {inserted},Skip: {skipped}")
+            logging.info("✅ Inserted: %d, Skip: %d", inserted, skipped)
             safe_sleep(20, 30)  # Sleep between requests 
         except (requests.exceptions.RequestException, psycopg2.Error) as e:
-            print("❌ Page crawl failed:", e)
+            logging.error("❌ Page crawl failed: %s", e)
             safe_sleep(10, 20)  # Sleep before retrying
 
     conn.close()
-    print(f"\n✨ {inserted} total inserted, {skipped} skipped")
+    logging.info("\n✨ %d total inserted, %d skipped", inserted, skipped)
 
 if __name__ == "__main__":
     # run_forever(lambda: main_loop(0, 5))
