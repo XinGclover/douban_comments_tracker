@@ -1,11 +1,14 @@
+from datetime import datetime
+
+import psycopg2
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime
-import time
-import psycopg2
-import random
-from config import TABLE_NAME, BASE_URL, get_headers
+
 from db import get_db_conn
+from utils.common import safe_sleep
+from utils.config import BASE_URL, TABLE_NAME
+from utils.config_loader import get_headers
+from utils.runner import run_for_rounds, run_for_duration, run_forever 
 
 BASE_URL_FIRST_PAGE = "{}/comments?limit=20&status=P&sort=time"
 BASE_URL_OTHER_PAGES = "{}/comments?start={}&limit=20&status=P&sort=time"
@@ -131,7 +134,7 @@ def insert_single_comment(conn, comment_dict):
         return False
 
 
-def main_loop(start_page=0, max_pages=10000, sleep_range=(50, 70)):
+def main_loop(start_page=0, max_pages=10):
     """ Main loop to fetch and insert comments into the database.
     :param start_page: int, page number to start fetching from
     :param max_pages: int, maximum number of pages to fetch
@@ -160,16 +163,18 @@ def main_loop(start_page=0, max_pages=10000, sleep_range=(50, 70)):
                     skipped += 1
 
             print(f"✅ Inserted: {inserted},Skip: {skipped}")
-            time.sleep(random.uniform(*sleep_range))
+            safe_sleep(20, 30)  # Sleep between requests 
         except (requests.exceptions.RequestException, psycopg2.Error) as e:
             print("❌ Page crawl failed:", e)
-            time.sleep(10)
+            safe_sleep(10, 20)  # Sleep before retrying
 
     conn.close()
     print(f"\n✨ {inserted} total inserted, {skipped} skipped")
 
 if __name__ == "__main__":
-    main_loop()
+    # run_forever(lambda: main_loop(0, 5))
+    # run_for_rounds(lambda: main_loop(0, 5), n_rounds=2)
+    run_for_duration(lambda: main_loop(0, 5), minutes=8)     
 
 
 
