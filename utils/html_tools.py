@@ -1,35 +1,5 @@
 import re
-
-def safe_number(value):
-    """
-    Convert value to int if it's integer.
-    Otherwise convert to float rounded to 1 decimal place.
-    Return None if conversion fails.
-    """
-    if value is None:
-        return None
-    try:
-        num = float(value)
-        if num.is_integer():
-            return int(num)
-        else:
-            return round(num, 1)
-    except (ValueError, TypeError):
-        return None
-    
-
-def safe_float_percent(value):
-    """ Safely converts a percentage string to a float.
-    :param value: The percentage string to convert
-    :return: float if conversion is successful, None otherwise
-    """ 
-    try:
-        if not value or '%' not in value:
-            return None
-        return float(value.strip('%'))
-    except ValueError:
-        return None
-    
+from utils.common import safe_number
 
 def extract_count(soup, pattern, selector=None):
     """ Extracts a count from a BeautifulSoup object using a regex pattern.

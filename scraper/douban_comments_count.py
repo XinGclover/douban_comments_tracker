@@ -1,9 +1,13 @@
-import requests
 from datetime import datetime
+
+import requests
 from bs4 import BeautifulSoup
-from config import COUNT_TABLE_NAME, BASE_URL, get_headers
+
 from db import get_db_conn
-from utils import extract_count, safe_number, safe_float_percent
+from utils.common import safe_float_percent, safe_number
+from utils.config import BASE_URL, COUNT_TABLE_NAME
+from utils.config_loader import get_headers
+from utils.html_tools import extract_count
 
 
 def extract_movie_stats(drama_url, headers=None):
