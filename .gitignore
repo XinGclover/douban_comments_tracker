@@ -199,3 +199,6 @@ test.ipynb
 
 # macOS files
 .DS_Store
+
+# Cookie file 
+cookie.txt

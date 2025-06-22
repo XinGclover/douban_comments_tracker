@@ -4,11 +4,11 @@ from datetime import datetime
 import time
 import psycopg2
 import random
-from config import TABLE_NAME, BASE_URL, HEADERS
+from config import TABLE_NAME, BASE_URL, get_headers
 from db import get_db_conn
 
-BASE_URL_FIRST_PAGE = "{}/comments?limit=20&status=F&sort=new_score"
-BASE_URL_OTHER_PAGES = "{}/comments?start={}&limit=20&status=P&sort=new_score"
+BASE_URL_FIRST_PAGE = "{}/comments?limit=20&status=P&sort=time"
+BASE_URL_OTHER_PAGES = "{}/comments?start={}&limit=20&status=P&sort=time"
 
 
 def extract_rating(block):
@@ -138,13 +138,14 @@ def main_loop(start_page=0, max_pages=10000, sleep_range=(50, 70)):
     :param sleep_range: tuple, range of seconds to sleep between requests
     """
     
-    conn = get_db_conn()   
+    conn = get_db_conn()
+    request_headers = get_headers()   
     inserted = 0
     skipped = 0
     for page in range(start_page, max_pages):
         try:
             print(f"\n📄 Fetching comments on page {page}...")
-            comments = fetch_comments_page(page, headers=HEADERS, drama_url=BASE_URL)
+            comments = fetch_comments_page(page, headers=request_headers, drama_url=BASE_URL)
             print(f"📄 Fetched {len(comments)} comments on page {page}")
             if not comments:
                 print("⚠️ No more comments, may be limited or reached the end")
