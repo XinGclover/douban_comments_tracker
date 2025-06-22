@@ -1,5 +1,7 @@
 import random
 import time 
+from datetime import datetime
+import pytz
 
 def safe_number(value):
     """
@@ -38,3 +40,15 @@ def safe_sleep(min_sec=10, max_sec=20):
     s = random.uniform(min_sec, max_sec)
     print(f"🕒 Sleeping {round(s, 1)} seconds...")
     time.sleep(s)
+
+
+TIMEZONE = pytz.timezone('Europe/Stockholm')
+
+
+def wait_until_next_even_hour(task_interval_hours=2, check_interval_seconds=1200):
+    """ Wait until the next even hour (e.g., 00:00, 02:00, etc.) """ 
+    while True:
+        now = datetime.now(TIMEZONE)
+        if now.minute == 0 and now.second < 5 and now.hour % task_interval_hours == 0:
+            return
+        time.sleep(check_interval_seconds)
