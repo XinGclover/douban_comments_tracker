@@ -1,9 +1,8 @@
 import requests
 from datetime import datetime
 from bs4 import BeautifulSoup
-from config import COUNT_TABLE_NAME, BASE_URL, HEADERS
+from config import COUNT_TABLE_NAME, BASE_URL, get_headers
 from db import get_db_conn
-import re
 from utils import extract_count, safe_number, safe_float_percent
 
 
@@ -92,7 +91,8 @@ def insert_movie_stats(movie_stats, db_conn):
 
 
 if __name__ == "__main__":
-    stats = extract_movie_stats(BASE_URL,HEADERS)
+    request_headers = get_headers() 
+    stats = extract_movie_stats(BASE_URL,request_headers)
     conn = get_db_conn()
     insert_movie_stats(stats, conn)
     conn.close()
