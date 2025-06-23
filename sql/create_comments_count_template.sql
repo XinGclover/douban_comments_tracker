@@ -1,6 +1,6 @@
 --Create table to store daily summary statistics of the Douban drama 
 
-CREATE TABLE public.huanyu_comments_count (
+CREATE TABLE public.linjiangxian_comments_count (
 	insert_time TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), 
 	rating NUMERIC(3,1),
 	rating_people INTEGER,                        -- Number of people who rated
@@ -13,7 +13,7 @@ CREATE TABLE public.huanyu_comments_count (
     total_reviews INTEGER,                        -- Number of long comments
     total_discussions INTEGER,                    -- Discussion group size    
 	
-	CONSTRAINT huanyu_unique_time UNIQUE (insert_time)
+	CONSTRAINT linjiangxian_unique_time UNIQUE (insert_time)
 );
 
 DROP TABLE public.huanyu_comments_count;

@@ -26,7 +26,9 @@ def extract_count(soup, pattern, selector=None):
         # Use regex to find the count in the text 
         match = re.search(pattern, text)
         if match:
-            raw_value = match.group(1).replace(',', '').replace(' ', '')
+            raw_value = match.group(1)
+            raw_value = raw_value.translate(str.maketrans('０１２３４５６７８９', '0123456789'))
+            raw_value = raw_value.replace(',', '').replace(' ', '')
             return safe_number(raw_value) 
         else:
             print(f"⚠️ Pattern not matched: {pattern}")
