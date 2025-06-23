@@ -198,10 +198,10 @@ test.ipynb
 
 
 # macOS files
-.DS_Store
+**/.DS_Store
 
 # Cookie file 
 cookie.txt
 
 
-sql/query.sql
+sql/temp/*.sql
