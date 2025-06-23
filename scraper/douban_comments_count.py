@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 
 from db import get_db_conn
 from utils.common import safe_float_percent, safe_number, wait_until_next_even_hour
-from utils.config import BASE_URL, COUNT_TABLE_NAME
+from utils.config import BASE_URL, COUNT_TABLE_NAME, DRAMA_TITLE
 from utils.config_loader import get_headers
 from utils.html_tools import extract_count
 from utils.logger import setup_logger 
@@ -121,6 +121,7 @@ def main_loop():
 
 
 if __name__ == "__main__":
+    logging.info("Starting the movie stats fetcher for %s", DRAMA_TITLE) 
     main_loop()  # Run once immediately for testing
     while True:
         wait_until_next_even_hour(TASK_INTERVAL_HOURS, CHECK_INTERVAL_SECONDS)  # Wait until the next even hour
