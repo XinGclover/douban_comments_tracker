@@ -9,7 +9,6 @@ from db import get_db_conn
 from utils.common import safe_sleep
 from utils.config import BASE_URL, TABLE_NAME, DRAMA_TITLE
 from utils.config_loader import get_headers
-from utils.runner import run_for_rounds, run_for_duration, run_forever 
 from utils.logger import setup_logger 
 
 setup_logger("logs/douban_comments_scraper.log", logging.INFO)  
@@ -180,9 +179,6 @@ def main_loop(start_page=0, max_pages=10):
 
 if __name__ == "__main__":
     logging.info("🚀 Starting Douban comments scraper for %s", DRAMA_TITLE)
-    # run_forever(lambda: main_loop(0, 5), sleep_range=(SLEEP_RANGE[0], SLEEP_RANGE[1]))
-    # run_for_rounds(lambda: main_loop(0, 5), n_rounds=N_ROUNDS, sleep_range=(SLEEP_RANGE[0], SLEEP_RANGE[1]))
-    run_for_duration(lambda: main_loop(0, 5), minutes=RUN_TIME_MINUTES, sleep_range=(SLEEP_RANGE[0], SLEEP_RANGE[1]))     
-
+    main_loop(start_page=0, max_pages=100)  # Adjust start_page and max_pages as needed
 
 
