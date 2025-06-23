@@ -1,16 +1,15 @@
-from datetime import datetime
-import pytz
 import logging
+from datetime import datetime
 
+import pytz
 import requests
 from bs4 import BeautifulSoup
 
-from utils.config import IQIYI_HEADERS
 from db import get_db_conn
 from utils.common import safe_float_percent, safe_number
-from utils.config import IQIYI_BASE_URL, IQIYI_HEAT_TABLE_NAME, DRAMA_TITLE # Removed unused IQIYI_HEAT_TABLE_NAME
+from utils.config import (DRAMA_TITLE, IQIYI_BASE_URL, IQIYI_HEADERS, IQIYI_HEAT_TABLE_NAME)
 from utils.html_tools import extract_count
-from utils.logger import setup_logger 
+from utils.logger import setup_logger
 
 setup_logger("logs/iqiyi_heat.log", logging.INFO)
 
