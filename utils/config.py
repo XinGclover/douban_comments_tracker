@@ -61,7 +61,7 @@ DOUBAN_DRAMA_ID = drama_info["id"]
 TABLE_NAME = drama_info["table"]
 DRAMA_TITLE = drama_info["title"]
 COUNT_TABLE_NAME = drama_info["count_table"]
-BASE_URL = f"https://movie.douban.com/subject/{DOUBAN_DRAMA_ID}/"
+BASE_URL = f"https://movie.douban.com/subject/{DOUBAN_DRAMA_ID}"
 
 # Constants for the selected drama of iQIYI 
 IQIYI_DRAMA_ID = drama_info.get("iqiyi_id")
