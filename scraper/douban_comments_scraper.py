@@ -10,6 +10,7 @@ from utils.common import safe_sleep
 from utils.config import BASE_URL, TABLE_NAME, DRAMA_TITLE
 from utils.config_loader import get_headers
 from utils.logger import setup_logger 
+from utils.html_tools import extract_href_info
 
 setup_logger("logs/douban_comments_scraper.log", logging.INFO)  
 
@@ -45,7 +46,9 @@ def parse_comment_block(block):
         return {}   
     votes = block.select_one('.vote-count').text.strip()
     user_id = block.select_one('a[data-id]')['data-id']
-    user_name = block.select_one('.comment-info a').text.strip()
+    a_tag = block.select_one('.comment-info a')
+    user_name = a_tag.text.strip()
+    user_id = extract_href_info(r'/people/([^/]+)/', a_tag)
     status = block.select_one('.comment-info span:nth-of-type(1)').text.strip()   
     rating = extract_rating(block)
     location = block.select_one('.comment-location').text.strip()

@@ -37,3 +37,21 @@ def extract_count(soup, pattern, selector=None):
     except (AttributeError, TypeError, re.error) as e:
         print(f"❌ Error extracting count: {e}")
         return None
+   
+
+def extract_href_info(pattern, tag):
+    """ Extracts user_id from a tag containing a link.
+    :param tag: BeautifulSoup tag containing the link
+    :return: Extracted user_id as a string or None if not found
+    """ 
+    try:
+        href = tag['href']
+        match = re.search(pattern, href)
+        if match:
+            return match.group(1)
+        else:
+            print(f"⚠️ Unable to extract user_id from link: {href}")
+            return None
+    except (AttributeError, TypeError, KeyError) as e:
+        print(f"❌ Failed to extract user_id: {e}")
+        return None
