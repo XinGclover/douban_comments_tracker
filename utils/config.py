@@ -71,3 +71,9 @@ IQIYI_HEADERS = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
     "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8"
 }
+
+DB_TABLES = [
+    f"{TABLE_PREFIX}_comments_count",
+    f"{TABLE_PREFIX}_comments",
+    f"{TABLE_PREFIX}_heat_iqiyi",
+]
