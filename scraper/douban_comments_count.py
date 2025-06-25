@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 
 from db import get_db_conn
 from utils.common import safe_float_percent, safe_number
-from utils.config import BASE_URL, COUNT_TABLE_NAME, DRAMA_TITLE
+from utils.config import BASE_URL, TABLE_PREFIX, DRAMA_TITLE
 from utils.config_loader import get_headers
 from utils.html_tools import extract_count
 from utils.logger import setup_logger 
@@ -71,7 +71,7 @@ def insert_movie_stats(movie_stats, db_conn):
     insert_time = movie_stats.get('insert_time', datetime.now())
 
     sql = f"""
-    INSERT INTO {COUNT_TABLE_NAME} (
+    INSERT INTO {TABLE_PREFIX}_comments_count (
         insert_time,
         rating,
         rating_people,
