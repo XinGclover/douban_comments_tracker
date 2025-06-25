@@ -207,3 +207,5 @@ cookie.txt
 sql/temp/*.sql
 
 sql/query.sql
+
+/backup/
