@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 
 from db import get_db_conn
 from utils.common import safe_sleep
-from utils.config import BASE_URL, TABLE_NAME, DRAMA_TITLE
+from utils.config import BASE_URL, TABLE_PREFIX, DRAMA_TITLE
 from utils.config_loader import get_headers
 from utils.logger import setup_logger 
 from utils.html_tools import extract_href_info
@@ -111,7 +111,7 @@ def insert_single_comment(conn, comment_dict):
     :return: bool, True if insert was successful, False otherwise
     """
     sql = f"""
-    INSERT INTO {TABLE_NAME} (
+    INSERT INTO {TABLE_PREFIX}_comments (
         user_id, user_name, votes, status, rating, user_location, create_time, user_comment
     )
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)

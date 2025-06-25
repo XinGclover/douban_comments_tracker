@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 
 from db import get_db_conn
 from utils.common import safe_float_percent, safe_number
-from utils.config import (DRAMA_TITLE, IQIYI_BASE_URL, IQIYI_HEADERS, IQIYI_HEAT_TABLE_NAME)
+from utils.config import (DRAMA_TITLE, IQIYI_BASE_URL, IQIYI_HEADERS, TABLE_PREFIX)
 from utils.html_tools import extract_count
 from utils.logger import setup_logger
 
@@ -37,7 +37,7 @@ def insert_movie_stats(movie_stats, db_conn):
     :param conn: psycopg2 connection object
     """
     insert_query = f"""
-        INSERT INTO {IQIYI_HEAT_TABLE_NAME} (insert_time, heat_info, effect_score, hot_link)
+        INSERT INTO {TABLE_PREFIX}_heat_iqiyi (insert_time, heat_info, effect_score, hot_link)
         VALUES (%s, %s, %s, %s)
         """
 
