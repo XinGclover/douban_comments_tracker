@@ -209,3 +209,5 @@ sql/temp/*.sql
 sql/query.sql
 
 /backup/
+
+/images/
