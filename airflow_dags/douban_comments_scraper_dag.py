@@ -1,3 +1,4 @@
+import os
 import subprocess
 from datetime import datetime, time, timedelta
 
@@ -7,6 +8,8 @@ from airflow.exceptions import AirflowSkipException
 from airflow.operators.python import PythonOperator
 
 PROJECT_PATH = '/zhaoxuelu_tracker'
+env = os.environ.copy()
+env["PYTHONPATH"] = PROJECT_PATH
 
 local_tz = pendulum.timezone("Asia/Shanghai")
 
@@ -40,7 +43,12 @@ def run_scraper_conditional():
             raise AirflowSkipException("Skip run: 9-19 o'clock non-operation")
 
 
-    subprocess.run(["python3", "{PROJECT_PATH}/scraper/douban_comments_scraper.py"], check=True)
+    subprocess.run(
+        ["python3", "-m", "scraper.douban_comments_scraper"],
+        check=True,
+        cwd=PROJECT_PATH,
+        env=env
+        )
 
 with DAG(
     dag_id='douban_comments_scraper_dag',
