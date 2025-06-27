@@ -27,7 +27,7 @@ Uses temporal patterns, user activity, and comment sentiment to identify potenti
 * PostgreSQL – Relational database for structured storage
 * Airflow (planned) – For hourly task scheduling and monitoring
 * Jupyter Notebook – Used for exploratory data analysis and prototyping
-* Looker Studio / Tableau (optional) – For dashboard creation and visualizations
+* Metabase – For dashboard creation and visualizations locally
 
 ### 🗃 Database Schema ###
 
@@ -44,7 +44,10 @@ Uses temporal patterns, user activity, and comment sentiment to identify potenti
 | `insert_time`      | TIMESTAMP         | Timestamp when the data was inserted into the database (default: `now()`) |
 | `unique_user_time` | UNIQUE CONSTRAINT | Ensures no duplicate records for the same user and comment time           |
 
+## Visualization Result
 
+![](/images/shujuan_1.png)
+![](/images/shujuan_2.png)
 
 ## Disclaimer
 
