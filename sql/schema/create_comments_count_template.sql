@@ -22,4 +22,10 @@ DROP TABLE public.huanyu_comments_count;
 
 
 
+ALTER TABLE shujuanyimeng_comments_count
+ALTER COLUMN insert_time TYPE TIMESTAMP WITH TIME ZONE
+USING insert_time AT TIME ZONE 'UTC';
+
+ALTER TABLE shujuanyimeng_comments_count
+ALTER COLUMN insert_time SET DEFAULT now();
 
