@@ -30,7 +30,7 @@ ORDER by rating DESC;
 
 
 -- Create a view of distribution of different ratings in different regions
-CREATE VIEW view_shujuanyimeng_comments_distribution AS
+CREATE OR REPLACE VIEW view_shujuanyimeng_comments_distribution AS
 SELECT 
     user_location,
     COUNT(*) FILTER (WHERE rating = 1) AS rating_1_count,
@@ -41,7 +41,23 @@ SELECT
 	COUNT(*) FILTER (WHERE rating IS NULL) AS no_rating_count,
     COUNT(*) AS total_count
 FROM public.shujuanyimeng_comments
-GROUP by user_location;
+GROUP by user_location
+ORDER by total_count DESC;
+
+
+--Create a long view of distribution of different ratings in different regions
+CREATE OR REPLACE VIEW view_shujuanyimeng_comments_distribution_long AS
+SELECT user_location, 'rating_1' AS rating_category, rating_1_count AS count FROM view_shujuanyimeng_comments_distribution
+UNION ALL
+SELECT user_location, 'rating_2' AS rating_category, rating_2_count AS count FROM view_shujuanyimeng_comments_distribution
+UNION ALL
+SELECT user_location, 'rating_3' AS rating_category, rating_3_count AS count FROM view_shujuanyimeng_comments_distribution
+UNION ALL
+SELECT user_location, 'rating_4' AS rating_category, rating_4_count AS count FROM view_shujuanyimeng_comments_distribution
+UNION ALL
+SELECT user_location, 'rating_5' AS rating_category, rating_5_count AS count FROM view_shujuanyimeng_comments_distribution
+UNION ALL
+SELECT user_location, 'no_rating' AS rating_category, no_rating_count AS count FROM view_shujuanyimeng_comments_distribution;
 
 
 
