@@ -1,13 +1,17 @@
 import os
 import subprocess
 from datetime import datetime, time, timedelta
+from pathlib import Path
 
 import pendulum
 from airflow import DAG
 from airflow.exceptions import AirflowSkipException
 from airflow.operators.python import PythonOperator
 
-PROJECT_PATH = '/zhaoxuelu_tracker'
+DAG_DIR = Path(__file__).resolve().parent
+
+PROJECT_PATH = DAG_DIR.parent.parent
+
 env = os.environ.copy()
 env["PYTHONPATH"] = PROJECT_PATH
 
