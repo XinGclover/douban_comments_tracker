@@ -44,6 +44,15 @@ Uses temporal patterns, user activity, and comment sentiment to identify potenti
 | `insert_time`      | TIMESTAMP         | Timestamp when the data was inserted into the database (default: `now()`) |
 | `unique_user_time` | UNIQUE CONSTRAINT | Ensures no duplicate records for the same user and comment time           |
 
+## Utility Scripts
+This project provides some auxiliary scripts to facilitate development and data processing:
+- #### Switch environment of Airflow ####
+env_airflow.sh              
+source env_airflow.sh
+- #### Save cookies from a logged-in session to a file, we can run the script once a week manually ####
+update_cookie.py
+
+
 ## Visualization Result
 
 ![](/images/shujuan_1.png)
