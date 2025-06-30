@@ -1,3 +1,6 @@
+--daram name: filter, zhaoxuelu,lizhi，huanyu,shujuanyimeng
+
+
 -- Create table 'zhaoxuelu_comments' to store user comments on the drama 'Zhaoxuelu'.
 -- Ensures uniqueness by combining user_id and comment timestamp (create_time).
 
@@ -14,6 +17,11 @@ CREATE TABLE public.linjiangxian_comments (
     
     CONSTRAINT unique_linjiangxian_user_time UNIQUE (user_id, create_time)
 );
+
+--Create commen index
+CREATE INDEX idx_user_zhaoxuelu ON zhaoxuelu_comments(user_id);
+
+
 
 --Delete data in the table
 
@@ -32,7 +40,7 @@ CREATE TABLE public.filter_comments (LIKE public.zhaoxuelu_comments INCLUDING AL
 -- Check if there is CONSTRAINT
 SELECT conname, contype 
 FROM pg_constraint 
-WHERE conname = 'unique_lizhi_user_time';
+WHERE conname = 'unique_shujuanyimeng_user_time';
 
 
 -- Add again CONSTRAINT
@@ -42,8 +50,33 @@ ALTER TABLE filter_comments
 ADD CONSTRAINT unique_filter_user_time UNIQUE (user_id, create_time);
 
 
---daram name: filter, zhaoxuelu,lizhi，huanyu
 
+--Create table to store daily summary statistics of the Douban drama 
+
+CREATE TABLE public.linjiangxian_comments_count (
+	insert_time TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), 
+	rating NUMERIC(3,1),
+	rating_people INTEGER,                        -- Number of people who rated
+    rating_1_star NUMERIC(5,2),           	      -- 1 star ratio
+    rating_2_star NUMERIC(5,2),                   -- 2 star ratio
+	rating_3_star NUMERIC(5,2),                   -- 3 star ratio
+	rating_4_star NUMERIC(5,2),                   -- 4 star ratio
+	rating_5_star NUMERIC(5,2),                   -- 5 star ratio
+    total_comments INTEGER,                       -- Number of short comments
+    total_reviews INTEGER,                        -- Number of long comments
+    total_discussions INTEGER,                    -- Discussion group size    
+	
+	CONSTRAINT linjiangxian_unique_time UNIQUE (insert_time)
+);
+
+
+
+ALTER TABLE shujuanyimeng_comments_count
+ALTER COLUMN insert_time TYPE TIMESTAMP WITH TIME ZONE
+USING insert_time AT TIME ZONE 'UTC';
+
+ALTER TABLE shujuanyimeng_comments_count
+ALTER COLUMN insert_time SET DEFAULT now();
 
 
 
