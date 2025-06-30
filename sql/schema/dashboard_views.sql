@@ -60,7 +60,13 @@ UNION ALL
 SELECT user_location, 'no_rating' AS rating_category, no_rating_count AS count FROM view_shujuanyimeng_comments_distribution;
 
 
-
-
-	
+--Create a long view of comparison of timeline of iqiyi heat
+CREATE OR REPLACE VIEW view_shujuanyimeng_iqiyiheat_timeline AS
+SELECT 
+    to_char(timestamp_shanghai, 'HH24:MI:SS') AS time_part,
+    date(timestamp_shanghai) AS date_part,
+    heat_info
+FROM shujuanyimeng_heat_iqiyi
+WHERE date(timestamp_shanghai) >= '2025-06-25'
+ORDER BY time_part, date_part;
 	
