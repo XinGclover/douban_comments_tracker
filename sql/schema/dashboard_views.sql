@@ -1,5 +1,5 @@
 -- Create a view of how iqiyi heat changes over time
-CREATE VIEW view_shujuanyimeng_heat_iqiyi_with_shanghai_time AS
+CREATE OR REPLACE VIEW view_shujuanyimeng_heat_iqiyi_with_shanghai_time AS
 SELECT 
     insert_time AT TIME ZONE 'Asia/Shanghai' AS insert_time_shanghai,
     heat_info
@@ -8,7 +8,7 @@ ORDER by insert_time DESC;
 	
 	
 -- Create a view of how douban total_comments，total_reviews，total_discussions changes over time
-CREATE VIEW view_shujuanyimeng_comments_count_with_shanghai_time AS
+CREATE OR REPLACE VIEW view_shujuanyimeng_comments_count_with_shanghai_time AS
 SELECT 
     insert_time AT TIME ZONE 'Asia/Shanghai' AS insert_time_shanghai,
 	total_comments,
@@ -19,7 +19,7 @@ ORDER by insert_time DESC;
 
 
 -- Create a view of all ratings percentage
-CREATE VIEW view_shujuanyimeng_comments_rating_percentage AS
+CREATE OR REPLACE VIEW view_shujuanyimeng_comments_rating_percentage AS
 SELECT 
    rating, 
    count(*) as rating_count, 
@@ -63,10 +63,12 @@ SELECT user_location, 'no_rating' AS rating_category, no_rating_count AS count F
 --Create a long view of comparison of timeline of iqiyi heat
 CREATE OR REPLACE VIEW view_shujuanyimeng_iqiyiheat_timeline AS
 SELECT 
-    to_char(insert_time AT TIME ZONE 'Europe/Stockholm' AT TIME ZONE 'Asia/Shanghai', 'HH24:MI:SS') AS time_part,
-    date(insert_time AT TIME ZONE 'Europe/Stockholm' AT TIME ZONE 'Asia/Shanghai') AS date_part,
+    to_char(timezone('Asia/Shanghai', insert_time), 'HH24:MI:SS') AS time_part,
+    date(timezone('Asia/Shanghai', insert_time)) AS date_part,
     heat_info
 FROM shujuanyimeng_heat_iqiyi
-WHERE date(insert_time AT TIME ZONE 'Europe/Stockholm' AT TIME ZONE 'Asia/Shanghai') >= '2025-06-25'
-ORDER BY time_part, date_part;
+WHERE date(timezone('Asia/Shanghai', insert_time)) >= '2025-06-25';
+
+DROP VIEW IF EXISTS view_shujuanyimeng_iqiyiheat_timeline;
+
 	
