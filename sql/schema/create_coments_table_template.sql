@@ -3,7 +3,6 @@
 
 -- Create table 'zhaoxuelu_comments' to store user comments on the drama 'Zhaoxuelu'.
 -- Ensures uniqueness by combining user_id and comment timestamp (create_time).
-
 CREATE TABLE public.linjiangxian_comments (
     user_id VARCHAR(20) NOT NULL,
     user_name VARCHAR(60),
@@ -52,7 +51,6 @@ ADD CONSTRAINT unique_filter_user_time UNIQUE (user_id, create_time);
 
 
 --Create table to store daily summary statistics of the Douban drama 
-
 CREATE TABLE public.linjiangxian_comments_count (
 	insert_time TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), 
 	rating NUMERIC(3,1),
@@ -79,5 +77,50 @@ ALTER TABLE shujuanyimeng_comments_count
 ALTER COLUMN insert_time SET DEFAULT now();
 
 
+-- Save the users who give low scores (2 stars and below), 
+-- and mark whether her collect has been fetched, 
+-- to facilitate deduplication, management, and breakpoint resumption
+CREATE TABLE low_rating_users (
+  user_id VARCHAR(20) NOT NULL,
+  drama_id VARCHAR(20) NOT NULL, 
+  rating INT,
+  comment_time TIMESTAMP WITH TIME ZONE NOT NULL,
+  fetched BOOLEAN DEFAULT FALSE,  
+  fetched_time TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  PRIMARY KEY (user_id, drama_id)
+);
+
+DROP TABLE low_rating_users;
+
+-- The first time insert data from comment table
+INSERT INTO low_rating_users (user_id, drama_id, rating, comment_time)
+SELECT DISTINCT user_id, '36744438', rating, create_time
+FROM shujuanyimeng_comments
+WHERE rating <= 2
+ON CONFLICT (user_id, drama_id) DO NOTHING;
+
+
+--Create table of collection of dramas of all users
+CREATE TABLE drama_collection (
+  source_drama_id VARCHAR(20),
+  user_id VARCHAR(20) NOT NULL,
+  drama_id VARCHAR(20) NOT NULL, 
+  rating INTEGER,
+  rating_time TIMESTAMP WITH TIME ZONE NOT NULL,
+  comment TEXT,  
+  vote_useful INTEGER,
+  insert_time TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  PRIMARY KEY (user_id, drama_id)
+);
+
+
+DROP TABLE drama_collection;
+
+
+-- Control the "user-level" crawling process to avoid unnecessary repeated crawling
+CREATE TABLE fetched_users (
+    user_id VARCHAR(20) PRIMARY KEY,
+    fetched_time TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
 
 
