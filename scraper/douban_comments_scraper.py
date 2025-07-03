@@ -17,10 +17,6 @@ setup_logger("logs/douban_comments_scraper.log", logging.INFO)
 BASE_URL_FIRST_PAGE = "{}/comments?limit=20&status=P&sort=time"  # URL for the first page of comments
 BASE_URL_OTHER_PAGES = "{}/comments?start={}&limit=20&status=P&sort=time"   # URL for subsequent pages of comments
 
-SLEEP_RANGE = (60, 90)  # Sleep time between requests
-N_ROUNDS = 5  # Number of rounds to run the scraper
-RUN_TIME_MINUTES = 10  # Total runtime in minutes for the scraper
-
 def extract_rating(block):
     """ Extract rating from the comment block.
     :param block: BeautifulSoup object representing a comment block
@@ -45,7 +41,6 @@ def parse_comment_block(block):
     if not block:
         return {}   
     votes = block.select_one('.vote-count').text.strip()
-    user_id = block.select_one('a[data-id]')['data-id']
     a_tag = block.select_one('.comment-info a')
     user_name = a_tag.text.strip()
     user_id = extract_href_info(r'/people/([^/]+)/', a_tag)
@@ -104,9 +99,9 @@ def fetch_comments_page(page_num=0, headers=None, drama_url=BASE_URL):
         return []
 
 
-def insert_single_comment(conn, comment_dict):
+def insert_single_comment(cursor, comment_dict):
     """ Insert a single comment into the database.
-    :param conn: psycopg2 connection object
+    :param cursor: psycopg2 cursor object
     :param comment_dict: dict, contains comment data to insert
     :return: bool, True if insert was successful, False otherwise
     """
@@ -120,7 +115,13 @@ def insert_single_comment(conn, comment_dict):
 
     try:
         rating_raw = comment_dict.get('rating')
-        rating = int(rating_raw) if rating_raw is not None else None
+        rating = None
+        if rating_raw is not None:
+            try:
+                rating = int(rating_raw)
+            except ValueError:
+                logging.warning("⚠️ Invalid rating value: %s", rating_raw)
+
         params = (
             str(comment_dict.get('user_id')).strip(),
             str(comment_dict.get('user_name', '')).strip(),
@@ -131,15 +132,11 @@ def insert_single_comment(conn, comment_dict):
             comment_dict.get('time'),
             str(comment_dict.get('comment', '')).strip()
         )
-
-        with conn.cursor() as cursor:
-            cursor.execute(sql, params)
-        conn.commit()
+        cursor.execute(sql, params)
         return cursor.rowcount == 1
-    except (psycopg2.Error, ValueError, KeyError) as e:
-        conn.rollback()
-        logging.error("Insert failed: %s", e)
-        logging.info("Wrong data: %s", comment_dict)
+    except (ValueError, TypeError, psycopg2.Error) as e: 
+        logging.error("❌ Insert failed: %s", e)    
+        logging.info("🔧 Wrong data: %s", comment_dict)
         return False
 
 
@@ -162,19 +159,24 @@ def main_loop(start_page=0, max_pages=10):
             if not comments:
                 logging.warning("⚠️ No more comments, may be limited or reached the end")
                 break
-            
-            for c in comments:
-                success = insert_single_comment(conn, c)
-                if success:
-                    inserted += 1
-                    logging.info("✅ Insert user_id=%s", c['user_id'])
-                else:
-                    skipped += 1
 
-            logging.info("✅ Inserted: %d, Skip: %d", inserted, skipped)
-            safe_sleep(20, 30)  # Sleep between requests 
+            with conn.cursor() as cursor:
+                for c in comments:
+                    success = insert_single_comment(cursor, c)
+                    if success:
+                        inserted += 1
+                        logging.info("✅ Insert user_id=%s", c['user_id'])
+                    else:
+                        skipped += 1
+
+                conn.commit() 
+                
+                logging.info("✅ Inserted: %d, Skip: %d", inserted, skipped)
+                safe_sleep(20, 30)     # Sleep between requests 
+            
         except (requests.exceptions.RequestException, psycopg2.Error) as e:
-            logging.error("❌ Page crawl failed: %s", e)
+            conn.rollback()
+            logging.error("❌ Page crawl failed: %s, rollback", e)
             safe_sleep(10, 20)  # Sleep before retrying
 
     conn.close()
