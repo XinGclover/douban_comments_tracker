@@ -120,7 +120,13 @@ DROP TABLE drama_collection;
 -- Control the "user-level" crawling process to avoid unnecessary repeated crawling
 CREATE TABLE fetched_users (
     user_id VARCHAR(20) PRIMARY KEY,
-    fetched_time TIMESTAMP WITH TIME ZONE DEFAULT now()
+    fetched_time TIMESTAMP WITH TIME ZONE DEFAULT now()，
+	total_dramas INTEGER
+	inserted_dramas INTEGER
 );
+
+
+ALTER TABLE fetched_users
+ADD inserted_dramas INTEGER;
 
 
