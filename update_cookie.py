@@ -8,7 +8,6 @@ def save_cookie_to_file(cookie_file="cookie.txt"):
     """
     chrome_options = Options()
     chrome_options.binary_location = "/Applications/Chrome137.app/Contents/MacOS/Google Chrome for Testing"
-    chrome_options.add_argument("--start-maximized")
 
     driver = webdriver.Chrome(options=chrome_options)
     try:
