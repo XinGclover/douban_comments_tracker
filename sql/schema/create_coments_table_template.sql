@@ -110,7 +110,7 @@ ON CONFLICT (user_id, drama_id) DO NOTHING;
 
 
 
---Create table of collection of dramas of all users
+--Fetch all rated dramas of low-scoring users
 CREATE TABLE drama_collection (
   --source_drama_id VARCHAR(20),       2025.07.05 modify
   user_id VARCHAR(20) NOT NULL,
@@ -165,16 +165,15 @@ CREATE TABLE public.douban_drama_info (
 TRUNCATE TABLE public.douban_drama_info;
 
 
--- Save the users who give high scores (4 stars and high)
-CREATE TABLE high_rating_users (
-  user_id VARCHAR(20) PRIMARY KEY,
-  low_drama_id VARCHAR(20),
-  high_drama_id VARCHAR(20) NOT NULL, 
-  low_rating INT,
-  hight_rating INT,
-  low_rating_time TIMESTAMP WITH TIME ZONE NOT NULL,
-  fetched_time TIMESTAMP WITH TIME ZONE DEFAULT now(),
+-- Save the users who give high scores (5 stars )
+CREATE TABLE high_rating_dramas_from_low_rating_users (
+  drama_id VARCHAR(20) PRIMARY KEY
 );
+
+
+
+
+
 
 
 

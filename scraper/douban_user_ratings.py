@@ -185,11 +185,10 @@ def fetch_user_collect(user_id, headers, cursor, conn):
     inserted = 0
     skipped = 0
     total_page, first_page_drama, total_dramas =  fetch_one_page(0, headers, user_id)
+    logging.info("🧮 There is total %s pages, %s dramas for user %s", total_page, total_dramas, user_id)
 
     if total_dramas and total_dramas > AMOUNT_MOST_RATING:
         return 0, 0, total_dramas, "too_many_dramas"
-
-    logging.info("🧮 There is total %s pages, %s dramas for user %s", total_page, total_dramas, user_id)
 
     if first_page_drama:
         ins, ski, stop_reason = insert_dramas_page(first_page_drama, user_id, cursor)
@@ -234,7 +233,7 @@ def process_db():
                 try:
                     logging.info("🚀 Start fetching for user %s", user_id)
                     inserted, skipped, total_dramas, stop_reason = fetch_user_collect(user_id, request_headers,cursor,conn)
-                    logging.info("🎬 User %s totallly insert %s dramas, skip %s", user_id, inserted, skipped)
+                    logging.info("🎬 User %s totally insert %s dramas, skip %s", user_id, inserted, skipped)
 
                     if stop_reason == "early_drama":
                         logging.info("🛑 User %s stopped early due to rating_time < 2019-01-01", user_id)
