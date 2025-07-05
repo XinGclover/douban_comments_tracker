@@ -17,6 +17,10 @@ setup_logger("logs/douban_user_ratings.log", logging.INFO)
 
 BASE_URL_PAGES = "https://movie.douban.com/people/{}/collect?start={}&sort=time&rating=all&mode=grid&type=all&filter=all"   # URL for subsequent pages of comments
 
+AMOUNT_LIMIT = 10
+AMOUNT_MOST_RATING = 500
+
+
 SELECT_QUERY = """
     SELECT user_id
     FROM low_rating_users lru
@@ -34,15 +38,15 @@ SELECT_QUERY = """
 
 INSERT_QUERY = """
     INSERT INTO drama_collection (
-        source_drama_id, user_id, drama_id, rating, rating_time, comment, vote_useful
-    ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+        user_id, drama_id, rating, rating_time, comment, vote_useful
+    ) VALUES (%s, %s, %s, %s, %s, %s)
     ON CONFLICT (user_id, drama_id) DO NOTHING
     """
 
 UPDATE_QUERY ="""
     UPDATE low_rating_users
     SET fetched = TRUE, fetched_time = NOW()
-    WHERE user_id = %s
+    WHERE user_id = %s AND drama_id = %s
     """
 
 INSERT_FETCHED_QUERY = """
@@ -61,11 +65,14 @@ def parse_block(block):
 
     rating_tag = block.select_one('span[class*="rating"]')
     rating = rating_tag['class'][0][6] if rating_tag else None
-    rating_time_str = block.select_one('span.date').text.strip()
-    try:
-        rating_time = datetime.strptime(rating_time_str, '%Y-%m-%d')
-    except ValueError:
-        rating_time = None
+
+    rating_time = None
+    rating_time_tag = block.select_one('span.date')
+    if rating_time_tag:
+        try:
+            rating_time = datetime.strptime(rating_time_tag.text.strip(), '%Y-%m-%d')
+        except ValueError:
+            pass
 
     comment_tag = block.select_one('span.comment')
     comment = comment_tag.text.strip() if comment_tag and comment_tag.text.strip() not in ('', 'None') else None
@@ -115,7 +122,6 @@ def insert_single_drama(cursor, drama_dict, user_id):
 
     try:
         params = (
-            DOUBAN_DRAMA_ID,
             str(user_id).strip(),
             str(drama_dict.get('drama_id')).strip(),
             int(drama_dict.get('rating')),
@@ -170,16 +176,17 @@ def fetch_one_page(page_num, headers, user_id):
             return total_page, parsed_blocks, total_dramas
         return None, parsed_blocks, None
 
-    except (requests.exceptions.RequestException, psycopg2.Error) as e:
+    except (requests.exceptions.RequestException, psycopg2.Error):
         return None, None, None
 
 
 def fetch_user_collect(user_id, headers, cursor, conn):
+    """Fetch one user's drama collection"""
     inserted = 0
     skipped = 0
     total_page, first_page_drama, total_dramas =  fetch_one_page(0, headers, user_id)
 
-    if total_dramas and total_dramas > 300:
+    if total_dramas and total_dramas > AMOUNT_MOST_RATING:
         return 0, 0, total_dramas, "too_many_dramas"
 
     logging.info("🧮 There is total %s pages, %s dramas for user %s", total_page, total_dramas, user_id)
@@ -211,13 +218,13 @@ def fetch_user_collect(user_id, headers, cursor, conn):
 
 
 def process_db():
+    """Get the low rating users then fetch their drama collections"""
     conn = get_db_conn()
     request_headers = COLLECT_HEADERS
     total_users = 0
     try:
         with conn.cursor() as cursor:
-            limit = 10
-            cursor.execute(SELECT_QUERY,(DOUBAN_DRAMA_ID,limit))
+            cursor.execute(SELECT_QUERY,(DOUBAN_DRAMA_ID, AMOUNT_LIMIT))
             results = cursor.fetchall()
             logging.info("📝 Start fetching %s:", results)
 
@@ -236,7 +243,7 @@ def process_db():
                     else:
                         logging.info("✅ User %s fetched normally", user_id)
 
-                    cursor.execute(UPDATE_QUERY, (user_id,))
+                    cursor.execute(UPDATE_QUERY, (user_id, DOUBAN_DRAMA_ID))
                     cursor.execute(INSERT_FETCHED_QUERY, (user_id, total_dramas, inserted))
                     conn.commit()
                     logging.info("✅ Fetched flag updated for user %s",user_id)

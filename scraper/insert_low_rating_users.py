@@ -17,7 +17,7 @@ def insert_low_rating_users(drama_id):
         INSERT INTO low_rating_users (user_id, drama_id, rating, comment_time)
         SELECT DISTINCT user_id, %s, rating, create_time
         FROM {TABLE_PREFIX}_comments
-        WHERE rating <= 2
+        WHERE rating = 1
         ON CONFLICT (user_id, drama_id) DO NOTHING;
         """
 
