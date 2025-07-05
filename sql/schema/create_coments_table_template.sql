@@ -86,13 +86,20 @@ CREATE TABLE low_rating_users (
   rating INT,
   comment_time TIMESTAMP WITH TIME ZONE NOT NULL,
   fetched BOOLEAN DEFAULT FALSE,  
-  fetched_time TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  fetched_time TIMESTAMP WITH TIME ZONE DEFAULT NULL,   --2025.07.05 modify
   PRIMARY KEY (user_id, drama_id)
 );
 
+--2025.07.05 modify when user's collect is been fetched, insert fetch_time
+ALTER TABLE low_rating_users ALTER COLUMN fetched_time DROP DEFAULT;
+
+UPDATE low_rating_users
+SET fetched_time = NULL
+WHERE fetched = FALSE;
+
 DROP TABLE low_rating_users;
 
--- The first time insert data from comment table
+-- Insert data from comment table
 INSERT INTO low_rating_users (user_id, drama_id, rating, comment_time)
 SELECT DISTINCT user_id, '36744438', rating, create_time
 FROM shujuanyimeng_comments
@@ -100,9 +107,12 @@ WHERE rating <= 2
 ON CONFLICT (user_id, drama_id) DO NOTHING;
 
 
+
+
+
 --Create table of collection of dramas of all users
 CREATE TABLE drama_collection (
-  source_drama_id VARCHAR(20),
+  --source_drama_id VARCHAR(20),       2025.07.05 modify
   user_id VARCHAR(20) NOT NULL,
   drama_id VARCHAR(20) NOT NULL, 
   rating INTEGER,
@@ -112,6 +122,10 @@ CREATE TABLE drama_collection (
   insert_time TIMESTAMP WITH TIME ZONE DEFAULT now(),
   PRIMARY KEY (user_id, drama_id)
 );
+
+
+--2025.07.05 modify, remove redundancy and confusion column
+ALTER TABLE drama_collection DROP COLUMN source_drama_id;
 
 
 DROP TABLE drama_collection;
@@ -126,7 +140,41 @@ CREATE TABLE fetched_users (
 );
 
 
-ALTER TABLE fetched_users
-ADD inserted_dramas INTEGER;
+-- Create table douban_drama_info to store low_rating users' high rating dramas.
+
+CREATE TABLE public.douban_drama_info (
+	drama_id VARCHAR(20) PRIMARY KEY,
+    drama_name VARCHAR(40),
+	release_year INTEGER ,
+	director TEXT,
+	actors TEXT[],
+	release_date DATE, 
+	rating NUMERIC(3,1),
+	rating_people INTEGER,                       
+    rating_1_star NUMERIC(5,2),           	     
+    rating_2_star NUMERIC(5,2),                   
+	rating_3_star NUMERIC(5,2),                   
+	rating_4_star NUMERIC(5,2),                   
+	rating_5_star NUMERIC(5,2),                   
+    total_comments INTEGER,                      
+    total_reviews INTEGER,                        
+    total_discussions INTEGER, 
+	insert_time TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+TRUNCATE TABLE public.douban_drama_info;
+
+
+-- Save the users who give high scores (4 stars and high)
+CREATE TABLE high_rating_users (
+  user_id VARCHAR(20) PRIMARY KEY,
+  low_drama_id VARCHAR(20),
+  high_drama_id VARCHAR(20) NOT NULL, 
+  low_rating INT,
+  hight_rating INT,
+  low_rating_time TIMESTAMP WITH TIME ZONE NOT NULL,
+  fetched_time TIMESTAMP WITH TIME ZONE DEFAULT now(),
+);
+
 
 

@@ -6,27 +6,22 @@ from bs4 import BeautifulSoup
 
 from db import get_db_conn
 from utils.common import safe_float_percent, safe_number
-from utils.config import BASE_URL, TABLE_PREFIX, DRAMA_TITLE
-from utils.config_loader import get_headers
+from utils.config import BASE_URL, TABLE_PREFIX, DRAMA_TITLE, COLLECT_HEADERS
 from utils.html_tools import extract_count
-from utils.logger import setup_logger 
+from utils.logger import setup_logger
 
 setup_logger("logs/douban_comments_count.log", logging.INFO)
-
-TASK_INTERVAL_HOURS = 2     # Interval in hours to run the task
-CHECK_INTERVAL_SECONDS = 1200   # Time to wait between checks for the next task
-POST_TASK_SLEEP_SECONDS = 90    # Sleep time after each task completion     
 
 
 def extract_movie_stats(drama_url, headers=None):
     """ Extracts movie statistics from the given Douban drama URL.
     :param drama_url: URL of the Douban drama page
     :return: dict containing movie statistics such as rating people, total comments, reviews, discussions, and rating percentages
-    """ 
+    """
     response = requests.get(drama_url, headers=headers, timeout=10)
     soup = BeautifulSoup(response.text, 'html.parser')
 
-    
+
 
     rating = extract_count(soup, r'(\d+\.\d+)', 'strong[property="v:average"]')
     rating_people = extract_count(soup, r'(\d+)', 'span[property="v:votes"]')
@@ -46,7 +41,7 @@ def extract_movie_stats(drama_url, headers=None):
         "total_comments": total_comments,
         "total_reviews": total_reviews,
         "total_discussions": total_discussions,
-        "rating_percents": rating_percents,       
+        "rating_percents": rating_percents,
     }
 
 
@@ -58,7 +53,7 @@ def insert_movie_stats(movie_stats, db_conn):
     :param conn: psycopg2 connection object
     :return: None
     """
-    rating = safe_number(movie_stats.get('rating')) 
+    rating = safe_number(movie_stats.get('rating'))
     total_comments = safe_number(movie_stats.get('total_comments'))
     total_discussions = safe_number(movie_stats.get('total_discussions'))
     total_reviews = safe_number(movie_stats.get('total_reviews'))
@@ -75,14 +70,14 @@ def insert_movie_stats(movie_stats, db_conn):
         insert_time,
         rating,
         rating_people,
-        rating_1_star, rating_2_star, rating_3_star, rating_4_star, rating_5_star,    
+        rating_1_star, rating_2_star, rating_3_star, rating_4_star, rating_5_star,
         total_comments, total_reviews, total_discussions
     )
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     ON CONFLICT (insert_time) DO NOTHING;
     """
 
-    params = (    
+    params = (
         insert_time,
         rating,
         rating_people,
@@ -91,9 +86,9 @@ def insert_movie_stats(movie_stats, db_conn):
         rating_3,
         rating_4,
         rating_5,
-        total_comments,     
+        total_comments,
         total_reviews,
-        total_discussions      
+        total_discussions
     )
 
     with db_conn.cursor() as cursor:
@@ -101,13 +96,12 @@ def insert_movie_stats(movie_stats, db_conn):
     db_conn.commit()
     logging.info("Inserted movie stats at %s with rating %s and %s comments.", insert_time, rating, total_comments)
 
-def main_loop():   
+def main_loop():
     """ Main loop to fetch and insert movie statistics into the database.
     :return: None
     """
-    request_headers = get_headers() 
-    stats = extract_movie_stats(BASE_URL, request_headers)
-    
+    stats = extract_movie_stats(BASE_URL, COLLECT_HEADERS)
+
     if not stats:
         logging.error("Failed to extract movie stats from %s", BASE_URL)
         return
@@ -119,6 +113,6 @@ def main_loop():
 
 
 if __name__ == "__main__":
-    logging.info("Starting the movie stats fetcher for %s", DRAMA_TITLE) 
-    main_loop() 
+    logging.info("Starting the movie stats fetcher for %s", DRAMA_TITLE)
+    main_loop()
 
