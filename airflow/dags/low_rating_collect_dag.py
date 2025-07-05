@@ -33,3 +33,10 @@ with DAG(
         task_id='run_user_rating',
         bash_command=f'PYTHONPATH={PROJECT_PATH} python3 {PROJECT_PATH}/scraper/douban_user_ratings.py'
     )
+
+    run_filter = BashOperator(
+        task_id='insert_high_rating_dramas',
+        bash_command=f'PYTHONPATH={PROJECT_PATH} python3 {PROJECT_PATH}/scraper/insert_high_rating_dramas.py'
+    )
+
+    run_scraper >> run_filter
