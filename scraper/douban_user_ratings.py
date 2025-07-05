@@ -219,7 +219,7 @@ def fetch_user_collect(user_id, headers, cursor, conn):
 def process_db():
     """Get the low rating users then fetch their drama collections"""
     conn = get_db_conn()
-    request_headers = COLLECT_HEADERS
+
     total_users = 0
     try:
         with conn.cursor() as cursor:
@@ -232,7 +232,7 @@ def process_db():
             for user_id in user_ids:
                 try:
                     logging.info("🚀 Start fetching for user %s", user_id)
-                    inserted, skipped, total_dramas, stop_reason = fetch_user_collect(user_id, request_headers,cursor,conn)
+                    inserted, skipped, total_dramas, stop_reason = fetch_user_collect(user_id, COLLECT_HEADERS,cursor,conn)
                     logging.info("🎬 User %s totally insert %s dramas, skip %s", user_id, inserted, skipped)
 
                     if stop_reason == "early_drama":
