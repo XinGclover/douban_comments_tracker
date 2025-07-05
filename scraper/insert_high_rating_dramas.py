@@ -13,14 +13,16 @@ def insert_high_rating_dramas():
         cursor = conn.cursor()
 
         sql = """
+        TRUNCATE high_rating_dramas_from_low_rating_users;
+
         INSERT INTO high_rating_dramas_from_low_rating_users (drama_id)
-        SELECT c2.drama_id
-        FROM low_rating_users l
-        JOIN drama_collection c2 ON l.user_id = c2.user_id
-        WHERE c2.rating = 5
-          AND c2.drama_id != l.drama_id
-        GROUP BY c2.drama_id
-        ORDER BY COUNT(DISTINCT c2.user_id) DESC
+        SELECT drama_id
+        FROM drama_collection c
+        WHERE rating = 5
+        AND NOT EXISTS (
+            SELECT 1 FROM low_rating_users l
+            WHERE l.user_id = c.user_id AND l.drama_id = c.drama_id
+        )
         ON CONFLICT (drama_id) DO NOTHING;
         """
 
