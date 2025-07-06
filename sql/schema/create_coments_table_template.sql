@@ -170,6 +170,17 @@ CREATE TABLE high_rating_dramas_from_low_rating_users (
   drama_id VARCHAR(20) PRIMARY KEY
 );
 
+-- Jieba extracts comments from zhaoxuelu_comments table, 
+-- does word segmentation, filters stop words, and stores them in a separate word list
+
+CREATE TABLE zhaoxuelu_comment_words (
+    user_id VARCHAR(20),
+    create_time TIMESTAMP WITHOUT TIME ZONE,
+    word TEXT
+);
+
+CREATE INDEX idx_word_zhaoxuelu ON zhaoxuelu_comment_words(word);
+CREATE INDEX idx_time_zhaoxuelu ON zhaoxuelu_comment_words(create_time);
 
 
 
