@@ -187,6 +187,10 @@ def fetch_user_collect(user_id, headers, cursor, conn):
     total_page, first_page_drama, total_dramas =  fetch_one_page(0, headers, user_id)
     logging.info("🧮 There is total %s pages, %s dramas for user %s", total_page, total_dramas, user_id)
 
+    if total_page is None:
+        logging.error("❗ total_page is None for user %s, skipping...", user_id)
+        return 0, 0, 0, "total_page_none"
+
     if total_dramas and total_dramas > AMOUNT_MOST_RATING:
         return 0, 0, total_dramas, "too_many_dramas"
 
@@ -195,19 +199,19 @@ def fetch_user_collect(user_id, headers, cursor, conn):
         inserted += ins
         skipped += ski
         conn.commit()
-        safe_sleep(8,12)
+        safe_sleep(10,15)
         if stop_reason:
             return inserted, skipped, total_dramas, stop_reason
 
     for page in range(1, total_page):
-        total_page, other_dramas, _ = fetch_one_page(page, headers, user_id)
+        _, other_dramas, _ = fetch_one_page(page, headers, user_id)
         if not other_dramas:
             continue
         ins, ski, stop_reason = insert_dramas_page(other_dramas, user_id, cursor)
         inserted += ins
         skipped += ski
         conn.commit()
-        safe_sleep(8,12)
+        safe_sleep(10,15)
         if stop_reason:
             return inserted, skipped, total_dramas, stop_reason
 
