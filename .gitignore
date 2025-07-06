@@ -209,3 +209,13 @@ sql/temp/*.sql
 sql/query.sql
 
 /backup/
+
+/images/
+
+
+# Ignore everything under airflow
+airflow/*
+
+# But not the dags folder
+!airflow/dags/
+!airflow/dags/**
