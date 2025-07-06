@@ -14,3 +14,15 @@ SHOW timezone;
 
 
 SET TIMEZONE TO 'Asia/Shanghai';
+
+
+
+ALTER TABLE zhaoxuelu_heat_iqiyi ADD COLUMN timestamp_shanghai TIMESTAMP;
+
+--Convert to Shanghai time
+UPDATE shujuanyimeng_heat_iqiyi
+SET timestamp_shanghai = insert_time AT TIME ZONE 'Asia/Shanghai'
+WHERE timestamp_shanghai IS NULL;
+
+--Remove redundant column because of not updating with inster_time
+ALTER TABLE shujuanyimeng_heat_iqiyi DROP COLUMN timestamp_shanghai;

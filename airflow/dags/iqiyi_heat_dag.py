@@ -1,10 +1,16 @@
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import pendulum
 from airflow import DAG
 from airflow.operators.bash import BashOperator
-from datetime import datetime, timedelta
 
 
-PROJECT_PATH = '/zhaoxuelu_tracker'
+DAG_DIR = Path(__file__).resolve().parent
 
+PROJECT_PATH = DAG_DIR.parent.parent
+
+stockholm_tz = pendulum.timezone("Europe/Stockholm")
 
 default_args = {
     'owner': 'cindy',
@@ -15,9 +21,9 @@ default_args = {
 with DAG(
     dag_id='iqiyi_heat_dag',
     default_args=default_args,
-    description='Capture the popularity of IQIYI every 5 minutes',
-    schedule_interval='*/10 * * * *',  # Every 5 minutes 
-    start_date=datetime(2025, 6, 23),
+    description='Capture the popularity of IQIYI every 20 minutes',
+    schedule_interval='*/20 * * * *',  # Every 20 minutes 
+    start_date=datetime(2025, 6, 23, 8, 0, 0, tzinfo=stockholm_tz),
     catchup=False,
     max_active_runs=1,
     tags=['iqiyi', 'heat','zhaoxuelu'],
