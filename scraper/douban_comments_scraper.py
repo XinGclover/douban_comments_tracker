@@ -151,7 +151,7 @@ def main_loop():
     request_headers = get_headers()
     inserted = 0
     skipped = 0
-    for page in range(0, 4):
+    for page in range(0, 5):
         try:
             logging.info("\n📄 Fetching comments on page %s...", page)
             comments = fetch_comments_page(page, headers=request_headers, drama_url=BASE_URL)
