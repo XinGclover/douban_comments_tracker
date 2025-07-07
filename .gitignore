@@ -219,3 +219,5 @@ airflow/*
 # But not the dags folder
 !airflow/dags/
 !airflow/dags/**
+
+airflow/dags/**/__pycache__/

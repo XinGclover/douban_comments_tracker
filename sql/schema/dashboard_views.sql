@@ -88,3 +88,26 @@ GROUP BY l.drama_id, c.drama_id, d.drama_name
 ORDER BY l.drama_id, high_rating_user_count DESC;
 
 
+--Create a view of all high frequency words
+CREATE OR REPLACE VIEW view_zhaoxuelu_top_words AS
+SELECT 
+    word,
+    COUNT(*) AS freq
+FROM zhaoxuelu_comment_words
+GROUP BY word
+ORDER BY freq DESC
+LIMIT 100;
+
+
+--Create a view of daily word frequency trend
+CREATE OR REPLACE VIEW view_zhaoxuelu_daily_top_words AS
+SELECT 
+    DATE_TRUNC('day', create_time) AS day,
+    word,
+    COUNT(*) AS freq
+FROM zhaoxuelu_comment_words
+GROUP BY day, word
+ORDER BY day, freq DESC;
+
+
+

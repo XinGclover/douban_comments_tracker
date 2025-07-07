@@ -4,7 +4,7 @@ from db import get_db_conn
 from utils.logger import setup_logger
 
 setup_logger("logs/insert_high_rating_dramas.log", logging.INFO)
-
+HIGH_SCORE = 5
 
 def insert_high_rating_dramas():
     """SQL insert value filtered from comments table into statistic table"""
@@ -18,7 +18,7 @@ def insert_high_rating_dramas():
         INSERT INTO high_rating_dramas_from_low_rating_users (drama_id)
         SELECT drama_id
         FROM drama_collection c
-        WHERE rating = 5
+        WHERE rating = %s
         AND NOT EXISTS (
             SELECT 1 FROM low_rating_users l
             WHERE l.user_id = c.user_id AND l.drama_id = c.drama_id
@@ -26,7 +26,7 @@ def insert_high_rating_dramas():
         ON CONFLICT (drama_id) DO NOTHING;
         """
 
-        cursor.execute(sql)
+        cursor.execute(sql,(HIGH_SCORE,))
         conn.commit()
 
         logging.info("✅ The high-rating drama is inserted")
