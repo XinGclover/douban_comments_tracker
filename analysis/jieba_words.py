@@ -8,6 +8,7 @@ import psycopg2
 from db import get_db_conn
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+#There are some special words that should be segmented in the way the dict specify.
 USER_DICT_FILE = os.path.join(BASE_DIR, 'user_dict.txt')
 
 STOPWORDS_DIR = os.path.join(BASE_DIR, '../stopwords')

@@ -17,8 +17,9 @@ setup_logger("logs/douban_user_ratings.log", logging.INFO)
 
 BASE_URL_PAGES = "https://movie.douban.com/people/{}/collect?start={}&sort=time&rating=all&mode=grid&type=all&filter=all"   # URL for subsequent pages of comments
 
-AMOUNT_LIMIT = 10
+AMOUNT_LIMIT = 6
 AMOUNT_MOST_RATING = 500
+EARLIEST_YEAR = 2022
 
 
 SELECT_QUERY = """
@@ -101,10 +102,10 @@ def parse_block(block):
 
 
 def should_save_drama(date_str, region):
-    """Only includes mainland China after 2019"""
+    """Only includes mainland China after EARLIEST_YEAR"""
     try:
         release_date = datetime.strptime(date_str, '%Y-%m-%d')
-        cutoff_date = datetime(2019, 1, 1)
+        cutoff_date = datetime(EARLIEST_YEAR, 1, 1)
         return release_date >= cutoff_date and region == "中国大陆"
     except (ValueError, TypeError) :
         return False
@@ -117,7 +118,7 @@ def insert_single_drama(cursor, drama_dict, user_id):
     if not should_save_drama(drama_dict.get('date_str'), drama_dict.get('region')):
         return False, None
 
-    if drama_dict.get('rating_time') < datetime(2019, 1, 1):
+    if drama_dict.get('rating_time') < datetime(EARLIEST_YEAR, 1, 1):
         return False, "early_drama"
 
     try:
@@ -240,7 +241,7 @@ def process_db():
                     logging.info("🎬 User %s totally insert %s dramas, skip %s", user_id, inserted, skipped)
 
                     if stop_reason == "early_drama":
-                        logging.info("🛑 User %s stopped early due to rating_time < 2019-01-01", user_id)
+                        logging.info("🛑 User %s stopped early due to rating_time < %s-01-01", user_id, EARLIEST_YEAR)
                     elif stop_reason == "too_many_dramas":
                         logging.info("⛔ User %s skipped entirely due to too many dramas (%d)", user_id, total_dramas)
                     else:
