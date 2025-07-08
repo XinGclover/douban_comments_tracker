@@ -30,10 +30,10 @@ def process_batch(batch_id, comments):
 
     ratio = low_rating / total if total > 0 else 0
 
-    logging.info(f"[{batch_id}] total={total}, low_rating={low_rating}, ratio={ratio:.2f}")
+    logging.info("[%s] total=%d, low_rating=%d, ratio=%.2f", batch_id, total, low_rating, ratio)
 
     if ratio >= RATIO_ALERT_THRESHOLD:
-        logging.warning(f"❗️ Low rating ratio exceeds threshold: {ratio:.2f}")
+        logging.warning("❗️ Low rating ratio exceeds threshold: %.2f", ratio)
 
         conn = get_db_conn()
         cursor = conn.cursor()
@@ -48,7 +48,7 @@ def process_batch(batch_id, comments):
         conn.commit()
         cursor.close()
         conn.close()
-        logging.info(f"✅ Inserted alert batch {batch_id} into low_rating_batches")
+        logging.info("✅ Inserted alert batch %s into low_rating_batches", batch_id)
     return {
         'batch_id': batch_id,
         'total': total,
@@ -71,15 +71,13 @@ def main():
         batch_id = data["batch_id"]
         batch_buffer[batch_id].append(data)
 
-        if len(batch_buffer[batch_id]) >= BATCH_MIN_COUNT:
-            result = process_batch(batch_id, batch_buffer[batch_id])
-            del batch_buffer[batch_id]
-
-    logging.info(
-                f"[{result['batch_id']}] 🎯 Total comments processed: {result['total']}, "
-                f"total low ratings: {result['low_rating']}, "
-                f"ratio: {result['ratio']:.2f}"
-            )
+    if len(batch_buffer[batch_id]) >= BATCH_MIN_COUNT:
+        result = process_batch(batch_id, batch_buffer[batch_id])
+        del batch_buffer[batch_id]
+        logging.info(
+            "[%s] 🎯 Total comments processed: %d, total low ratings: %d, ratio: %.2f",
+            result['batch_id'], result['total'], result['low_rating'], result['ratio']
+        )
 
 
 if __name__ == '__main__':

@@ -1,5 +1,6 @@
-from datetime import datetime
 import logging
+import time
+from datetime import datetime
 
 import psycopg2
 import requests
@@ -7,15 +8,17 @@ from bs4 import BeautifulSoup
 
 from db import get_db_conn
 from utils.common import safe_sleep
-from utils.config import BASE_URL, TABLE_PREFIX, DRAMA_TITLE
+from utils.config import BASE_URL, DRAMA_TITLE, TABLE_PREFIX
 from utils.config_loader import get_headers
-from utils.logger import setup_logger
 from utils.html_tools import extract_href_info
+from utils.logger import setup_logger
 
 setup_logger("logs/douban_comments_scraper.log", logging.INFO)
 
 BASE_URL_FIRST_PAGE = "{}/comments?limit=20&status=P&sort=time"  # URL for the first page of comments
 BASE_URL_OTHER_PAGES = "{}/comments?start={}&limit=20&status=P&sort=time"   # URL for subsequent pages of comments
+
+BATCH_ID = datetime.now().strftime('%Y%m%d%H%M')
 
 def extract_rating(block):
     """ Extract rating from the comment block.
@@ -107,9 +110,9 @@ def insert_single_comment(cursor, comment_dict):
     """
     sql = f"""
     INSERT INTO {TABLE_PREFIX}_comments (
-        user_id, user_name, votes, status, rating, user_location, create_time, user_comment
+        user_id, user_name, votes, status, rating, user_location, create_time, user_comment, batch_id
     )
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
     ON CONFLICT (user_id, create_time) DO NOTHING
     """
 
@@ -130,7 +133,8 @@ def insert_single_comment(cursor, comment_dict):
             rating,
             str(comment_dict.get('location', '')).strip(),
             comment_dict.get('time'),
-            str(comment_dict.get('comment', '')).strip()
+            str(comment_dict.get('comment', '')).strip(),
+            BATCH_ID
         )
         cursor.execute(sql, params)
         return cursor.rowcount == 1
