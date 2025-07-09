@@ -209,6 +209,7 @@ sql/temp/*.sql
 sql/query.sql
 
 /backup/
+/export/
 
 /images/
 
@@ -221,3 +222,4 @@ airflow/*
 !airflow/dags/**
 
 airflow/dags/**/__pycache__/
+
