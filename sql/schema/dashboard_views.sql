@@ -1,6 +1,9 @@
 -- Create a view of how iqiyi heat changes over time
+DROP VIEW IF EXISTS view_zhaoxuelu_heat_iqiyi_with_shanghai_time;
+
 CREATE OR REPLACE VIEW view_zhaoxuelu_heat_iqiyi_with_shanghai_time AS
 SELECT 
+	insert_time,
     insert_time AT TIME ZONE 'Asia/Shanghai' AS insert_time_shanghai,
     heat_info
 FROM public.zhaoxuelu_heat_iqiyi
@@ -119,4 +122,51 @@ SELECT
 	s.recorded_at
 FROM weibo_user_stats s
 JOIN weibo_user u ON s.user_id = u.user_id;
+
+
+--Create a view of increment of weibo users, the period is the same as view_weibo_stats
+CREATE OR REPLACE VIEW view_weibo_stats_increment AS
+SELECT
+    u.user_name,
+    s.recorded_at,
+    s.followers_count,
+    COALESCE(
+      s.followers_count - LAG(s.followers_count) OVER (PARTITION BY s.user_id ORDER BY s.recorded_at),
+      0
+    ) AS followers_increment
+FROM weibo_user_stats s
+JOIN weibo_user u ON s.user_id = u.user_id;
+
+--Create a view of increment of weibo users every day
+CREATE OR REPLACE VIEW view_weibo_daily_increment AS
+WITH daily_snapshot AS (
+    SELECT
+        user_id,
+        DATE(recorded_at) AS stat_date,
+        MAX(recorded_at) AS last_recorded_at
+    FROM weibo_user_stats
+    GROUP BY user_id, DATE(recorded_at)
+),
+daily_followers AS (
+    SELECT
+        s.user_id,
+        DATE(s.recorded_at) AS stat_date,
+        s.followers_count
+    FROM weibo_user_stats s
+    JOIN daily_snapshot d
+      ON s.user_id = d.user_id
+     AND s.recorded_at = d.last_recorded_at
+)
+SELECT
+    u.user_name,
+    d.stat_date,
+    d.followers_count,
+    COALESCE(
+        d.followers_count - LAG(d.followers_count) OVER (PARTITION BY d.user_id ORDER BY d.stat_date),
+        0
+    ) AS daily_increment
+FROM daily_followers d
+JOIN weibo_user u ON d.user_id = u.user_id
+ORDER BY u.user_name, d.stat_date;
+
 

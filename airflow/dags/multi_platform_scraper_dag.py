@@ -22,7 +22,7 @@ with DAG(
     dag_id='multi_platform_scraper_dag',
     default_args=default_args,
     description='Capture the parameters of weibo every day',
-    schedule_interval='0 6 * * *',  # Every day
+    schedule_interval='0 */4 * * *',  # Once every 4 hours
     start_date=datetime(2025, 7, 7, 8, 0, 0, tzinfo=stockholm_tz),
     catchup=False,
     max_active_runs=1,
