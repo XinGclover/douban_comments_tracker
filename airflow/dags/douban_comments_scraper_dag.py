@@ -76,4 +76,10 @@ with DAG(
         bash_command=f'PYTHONPATH={PROJECT_PATH} python3 {PROJECT_PATH}/scraper/insert_low_rating_users.py'
     )
 
-    run_scraper >> run_filter
+    send_to_kafka = BashOperator(
+        task_id='run_producer_script',
+        bash_command=f'PYTHONPATH={PROJECT_PATH} python3 {PROJECT_PATH}/kafka_pipeline/producer_send_comments.py',
+    )
+
+
+    run_scraper >> run_filter >> send_to_kafka
