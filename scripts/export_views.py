@@ -18,7 +18,7 @@ SELECT_QUERY = """
     """
 
 PROJECT_PATH = os.environ["PROJECT_PATH"]
-EXPORT_DIR = os.path.join(PROJECT_PATH, f"export/{TABLE_PREFIX}_view_exports")
+EXPORT_DIR = os.path.join(PROJECT_PATH, f"export/{TABLE_PREFIX}_view_export")
 
 def get_all_views(cursor):
     cursor.execute(SELECT_QUERY)
