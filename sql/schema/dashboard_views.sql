@@ -110,4 +110,13 @@ GROUP BY day, word
 ORDER BY day, freq DESC;
 
 
+--Create a view of trend of weibo users
+CREATE OR REPLACE VIEW view_weibo_stats AS
+SELECT
+    u.user_name,
+    s.followers_count,
+    s.likes_count,
+	s.recorded_at
+FROM weibo_user_stats s
+JOIN weibo_user u ON s.user_id = u.user_id;
 

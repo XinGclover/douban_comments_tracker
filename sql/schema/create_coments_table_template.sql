@@ -13,6 +13,7 @@ CREATE TABLE public.linjiangxian_comments (
     create_time TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     user_comment TEXT,
     insert_time TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+	batch_id TEXT,       --add 2025.7.8
     
     CONSTRAINT unique_linjiangxian_user_time UNIQUE (user_id, create_time)
 );
@@ -20,6 +21,10 @@ CREATE TABLE public.linjiangxian_comments (
 --Create commen index
 CREATE INDEX idx_user_zhaoxuelu ON zhaoxuelu_comments(user_id);
 
+
+--Add a column for Kafka modify 2025.7.8
+ALTER TABLE lizhi_comments
+ADD COLUMN batch_id TEXT;
 
 
 --Delete data in the table
@@ -185,6 +190,14 @@ CREATE INDEX idx_time_zhaoxuelu ON zhaoxuelu_comment_words(create_time);
 
 
 
+--Creat Kafka consumer table
 
+CREATE TABLE IF NOT EXISTS low_rating_batches (
+    batch_id VARCHAR(20) PRIMARY KEY,               
+    insert_time TIMESTAMPTZ NOT NULL DEFAULT NOW(), 
+    total_count INTEGER NOT NULL,                   
+    low_rating_count INTEGER NOT NULL,             
+    low_rating_ratio NUMERIC(5, 2) NOT NULL         
+);
 
 

@@ -22,7 +22,7 @@ with DAG(
     dag_id='iqiyi_heat_dag',
     default_args=default_args,
     description='Capture the popularity of IQIYI every 20 minutes',
-    schedule_interval='*/20 * * * *',  # Every 20 minutes 
+    schedule_interval='*/20 * * * *',  # Every 20 minutes
     start_date=datetime(2025, 6, 23, 8, 0, 0, tzinfo=stockholm_tz),
     catchup=False,
     max_active_runs=1,

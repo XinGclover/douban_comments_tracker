@@ -1,5 +1,5 @@
 import random
-import time 
+import time
 from datetime import datetime
 import pytz
 
@@ -19,21 +19,23 @@ def safe_number(value):
             return round(num, 1)
     except (ValueError, TypeError):
         return None
-    
+
 
 def safe_float_percent(value):
     """ Safely converts a percentage string to a float.
     :param value: The percentage string to convert
     :return: float if conversion is successful, None otherwise
-    """ 
+    """
+    if value is None:
+        return None
     try:
-        if not value or '%' not in value:
-            return None
-        return float(value.strip('%'))
+        if isinstance(value, str) and '%' in value:
+            return float(value.strip('%'))
+        return float(value)
     except ValueError:
         return None
-    
-    
+
+
 
 def safe_sleep(min_sec=10, max_sec=20):
     """ Sleep for a random duration between min_sec and max_sec. """
@@ -46,7 +48,7 @@ TIMEZONE = pytz.timezone('Europe/Stockholm')
 
 
 def wait_until_next_even_hour(task_interval_hours=2, check_interval_seconds=1200):
-    """ Wait until the next even hour (e.g., 00:00, 02:00, etc.) """ 
+    """ Wait until the next even hour (e.g., 00:00, 02:00, etc.) """
     while True:
         now = datetime.now(TIMEZONE)
         if now.minute == 0 and now.second < 5 and now.hour % task_interval_hours == 0:
