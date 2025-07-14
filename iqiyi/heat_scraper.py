@@ -12,7 +12,7 @@ from utils.html_tools import extract_count
 from utils.logger import setup_logger
 from pathlib import Path
 
-LOG_PATH = Path(__file__).resolve().parent.parent / "logs" / "iqiyi_heat.log.log"
+LOG_PATH = Path(__file__).resolve().parent.parent / "logs" / "iqiyi_heat.log"
 setup_logger(log_file=str(LOG_PATH))
 
 

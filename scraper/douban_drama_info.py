@@ -80,9 +80,9 @@ def extract_movie_stats(drama_id, url, headers=None):
         if len(actors) >= 4:
             break
 
-    date_str = soup.select_one('span[property="v:initialReleaseDate"]')['content']
-    release_date = date_str.split('(')[0]
-
+    tag = soup.select_one('span[property="v:initialReleaseDate"]')
+    date_str = tag['content'] if tag and tag.has_attr('content') else None
+    release_date = date_str.split('(')[0] if date_str else None
 
     rating = extract_count(soup, r'(\d+\.\d+)', 'strong[property="v:average"]')
     rating_people = extract_count(soup, r'(\d+)', 'span[property="v:votes"]')

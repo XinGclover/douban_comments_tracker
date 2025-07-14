@@ -59,7 +59,7 @@ with DAG(
     dag_id='douban_comments_scraper_dag',
     default_args=default_args,
     description='Scheduled crawling of Douban comments',
-    schedule_interval='*/30 * * * *',  # Every hour at minute 0
+    schedule_interval=timedelta(minutes=45),   # Every 30 minutes
     start_date=datetime(2025, 6, 26, 8, 0, 0, tzinfo=local_tz),
     catchup=False,
     max_active_runs=1,

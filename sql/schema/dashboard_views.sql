@@ -197,4 +197,52 @@ FROM daily_followers d
 JOIN weibo_user u ON d.user_id = u.user_id
 ORDER BY u.user_name, d.stat_date;
 
+--Create a view of how many low_rating=1 users have been fetched rated dramas
+--DROP VIEW IF EXISTS view_fetched_low_rating_related_users;
 
+CREATE OR REPLACE VIEW view_fetched_low_rating_related_users AS
+SELECT COUNT(DISTINCT user_id)
+FROM (
+    -- 1. Appears in drama_collection and has been recorded in the low_rating_users table
+    SELECT DISTINCT dc.user_id
+    FROM drama_collection dc
+    JOIN (
+        SELECT DISTINCT user_id
+        FROM low_rating_users
+        WHERE drama_id = '36317401'
+    ) AS lru
+    ON dc.user_id = lru.user_id
+
+    UNION
+
+    -- 2. Select the reviewers with fetched=true directly from low_rating_users
+    SELECT user_id
+    FROM low_rating_users
+    WHERE drama_id = '36317401' AND fetched = true
+) AS combined_user_ids;
+
+
+
+
+--Create a view of all fetched low_rating users of zhaoxuelu
+CREATE OR REPLACE VIEW view_fetched_users_in_low_rating_36317401 AS
+SELECT COUNT(DISTINCT f.user_id) AS fetched_user_id
+FROM fetched_users f
+JOIN (
+    SELECT DISTINCT user_id
+    FROM low_rating_users
+    WHERE drama_id = '36317401'
+) AS lru
+ON f.user_id = lru.user_id;
+
+
+-- Create a view of how iqiyi hot rank changes over time
+--DROP VIEW IF EXISTS view_zhaoxuelu_iqiyi_hotlink_with_shanghai_time;
+
+CREATE OR REPLACE VIEW view_zhaoxuelu_iqiyi_hotlink_with_shanghai_time AS
+SELECT 
+	insert_time,
+    insert_time AT TIME ZONE 'Asia/Shanghai' AS insert_time_shanghai,
+    hot_link
+FROM public.zhaoxuelu_heat_iqiyi
+WHERE insert_time >= TIMESTAMP '2025-07-13 04:00:00';
