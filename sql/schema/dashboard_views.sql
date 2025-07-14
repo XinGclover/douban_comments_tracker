@@ -1,5 +1,5 @@
 -- Create a view of how iqiyi heat changes over time
-DROP VIEW IF EXISTS view_zhaoxuelu_heat_iqiyi_with_shanghai_time;
+--DROP VIEW IF EXISTS view_zhaoxuelu_heat_iqiyi_with_shanghai_time;
 
 CREATE OR REPLACE VIEW view_zhaoxuelu_heat_iqiyi_with_shanghai_time AS
 SELECT 
@@ -7,10 +7,13 @@ SELECT
     insert_time AT TIME ZONE 'Asia/Shanghai' AS insert_time_shanghai,
     heat_info
 FROM public.zhaoxuelu_heat_iqiyi
+WHERE insert_time >= TIMESTAMP '2025-07-13 04:00:00'
 ORDER by insert_time DESC;
 	
 	
 -- Create a view of how douban total_comments，total_reviews，total_discussions changes over time
+--DROP VIEW IF EXISTS view_zhaoxuelu_comments_count_with_shanghai_time;
+
 CREATE OR REPLACE VIEW view_zhaoxuelu_comments_count_with_shanghai_time AS
 SELECT 
     insert_time AT TIME ZONE 'Asia/Shanghai' AS insert_time_shanghai,
@@ -18,21 +21,27 @@ SELECT
 	total_reviews,
 	total_discussions
 FROM public.zhaoxuelu_comments_count
+WHERE insert_time >= TIMESTAMP '2025-07-13 04:00:00'
 ORDER by insert_time DESC;
 
 
 -- Create a view of all ratings percentage
+--DROP VIEW IF EXISTS view_zhaoxuelu_comments_rating_percentage;
+
 CREATE OR REPLACE VIEW view_zhaoxuelu_comments_rating_percentage AS
 SELECT 
    rating, 
    count(*) as rating_count, 
    ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 2) AS rating_percent
 FROM public.zhaoxuelu_comments
+WHERE insert_time >= TIMESTAMP '2025-07-13 04:00:00'
 GROUP by rating
 ORDER by rating DESC;
 
 
 -- Create a view of distribution of different ratings in different regions
+--DROP VIEW IF EXISTS view_zhaoxuelu_comments_distribution;
+
 CREATE OR REPLACE VIEW view_zhaoxuelu_comments_distribution AS
 SELECT 
     user_location,
@@ -44,6 +53,7 @@ SELECT
 	COUNT(*) FILTER (WHERE rating IS NULL) AS no_rating_count,
     COUNT(*) AS total_count
 FROM public.zhaoxuelu_comments
+WHERE insert_time >= TIMESTAMP '2025-07-13 04:00:00'
 GROUP by user_location
 ORDER by total_count DESC;
 
@@ -64,13 +74,15 @@ SELECT user_location, 'no_rating' AS rating_category, no_rating_count AS count F
 
 
 --Create a long view of comparison of timeline of iqiyi heat
+--DROP VIEW IF EXISTS view_zhaoxuelu_iqiyiheat_timeline;
+
 CREATE OR REPLACE VIEW view_zhaoxuelu_iqiyiheat_timeline AS
 SELECT 
     to_char(timezone('Asia/Shanghai', insert_time), 'HH24:MI:SS') AS time_part,
     date(timezone('Asia/Shanghai', insert_time)) AS date_part,
     heat_info
 FROM zhaoxuelu_heat_iqiyi
-WHERE date(timezone('Asia/Shanghai', insert_time)) >= '2025-06-25';
+WHERE insert_time >= TIMESTAMP '2025-07-13 04:00:00';
 
 --DROP VIEW IF EXISTS view_zhaoxuelu_iqiyiheat_timeline;
 
@@ -90,27 +102,43 @@ WHERE c.rating = 5
 GROUP BY l.drama_id, c.drama_id, d.drama_name
 ORDER BY l.drama_id, high_rating_user_count DESC;
 
+--Create a view of high rating dramas by low rating users for zhaoxuelu
+CREATE OR REPLACE VIEW view_high_rating_dramas_source_zhaoxuelu AS
+SELECT
+    high_rating_drama_id,
+    drama_name,
+    high_rating_user_count
+FROM view_high_rating_dramas_source
+WHERE source_drama_id = '36317401'    
+ORDER BY high_rating_user_count DESC;
+
 
 --Create a view of all high frequency words
+--DROP VIEW IF EXISTS view_zhaoxuelu_top_words;
+
 CREATE OR REPLACE VIEW view_zhaoxuelu_top_words AS
 SELECT 
     word,
     COUNT(*) AS freq
 FROM zhaoxuelu_comment_words
+WHERE create_time >= TIMESTAMP '2025-07-13 04:00:00'
 GROUP BY word
 ORDER BY freq DESC
 LIMIT 100;
 
 
 --Create a view of daily word frequency trend
+--DROP VIEW IF EXISTS view_zhaoxuelu_daily_top_words;
 CREATE OR REPLACE VIEW view_zhaoxuelu_daily_top_words AS
 SELECT 
     DATE_TRUNC('day', create_time) AS day,
     word,
     COUNT(*) AS freq
 FROM zhaoxuelu_comment_words
+WHERE create_time >= TIMESTAMP '2025-07-13 04:00:00'
 GROUP BY day, word
-ORDER BY day, freq DESC;
+ORDER BY day, freq DESC
+LIMIT 100;
 
 
 --Create a view of trend of weibo users

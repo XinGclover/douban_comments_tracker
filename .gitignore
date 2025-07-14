@@ -226,4 +226,3 @@ airflow/dags/**/__pycache__/
 
 # Google credentials
 google/google_credentials.json
-token.json

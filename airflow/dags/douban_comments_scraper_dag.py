@@ -35,17 +35,17 @@ def run_scraper_conditional():
     current_minute = now.minute
 
    # Check the current time and determine if the scraper should run
-    if time(15, 0) <= now or now < time(3, 0):
-        # 15:00 - 3:00,run every 30 minutes
+    if time(11, 0) <= now or now < time(2, 0):
+        # 11:00 - 1:00,run every 30 minutes
         pass
-    elif time(3, 0) <= now < time(9, 0):
-        # 3:00 - 9:00, only run on even hours at the top of the hour
+    elif time(2, 0) <= now < time(8, 0):
+        # 2:00 - 8:00, only run on even hours at the top of the hour
         if current_hour % 2 != 0 or current_minute != 0:
-            raise AirflowSkipException("Skip run: 2-9 o'clock does not run on the hour of non-even hours")
+            raise AirflowSkipException("Skip run: 1-8 o'clock does not run on the hour of non-even hours")
     else:
-        # 9:00 - 15:00， only run on the hour
+        # 8:00 - 11:00， only run on the hour
         if current_minute != 0:
-            raise AirflowSkipException("Skip run: 9-19 o'clock non-operation")
+            raise AirflowSkipException("Skip run: 8-11 o'clock non-operation")
 
 
     subprocess.run(

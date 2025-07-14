@@ -9,8 +9,11 @@ from utils.common import safe_float_percent, safe_number
 from utils.config import BASE_URL, TABLE_PREFIX, DRAMA_TITLE, COLLECT_HEADERS
 from utils.html_tools import extract_count
 from utils.logger import setup_logger
+from pathlib import Path
 
-setup_logger("logs/douban_comments_count.log", logging.INFO)
+LOG_PATH = Path(__file__).resolve().parent.parent / "logs" / "douban_comments_count.log"
+setup_logger(log_file=str(LOG_PATH))
+
 
 
 def extract_movie_stats(drama_url, headers=None):
@@ -115,4 +118,4 @@ def main_loop():
 if __name__ == "__main__":
     logging.info("Starting the movie stats fetcher for %s", DRAMA_TITLE)
     main_loop()
-
+    logging.shutdown()

@@ -1,9 +1,12 @@
 import logging
+from pathlib import Path
 
 from db import get_db_conn
 from utils.logger import setup_logger
 
-setup_logger("logs/insert_high_rating_dramas.log", logging.INFO)
+LOG_PATH = Path(__file__).resolve().parent.parent / "logs" / "insert_high_rating_dramas.log"
+setup_logger(log_file=str(LOG_PATH))
+
 HIGH_SCORE = 5
 
 def insert_high_rating_dramas():
@@ -42,3 +45,4 @@ def insert_high_rating_dramas():
 
 if __name__ == "__main__":
     insert_high_rating_dramas()
+    logging.shutdown()

@@ -9,8 +9,11 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from db import get_db_conn
 from utils.logger import setup_logger
+from pathlib import Path
 
-setup_logger("logs/weibo_scraper.log", logging.INFO)
+LOG_PATH = Path(__file__).resolve().parent.parent / "logs" / "weibo_scraper.log"
+setup_logger(log_file=str(LOG_PATH))
+
 
 
 USER_URL = "https://weibo.com/u/{}"
@@ -90,3 +93,4 @@ def crawl_weibo(user_id):
 if __name__ == "__main__":
     test_id = 1798539915
     crawl_weibo(test_id)
+    logging.shutdown()

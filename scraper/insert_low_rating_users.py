@@ -1,10 +1,12 @@
 import logging
+from pathlib import Path
 
 from db import get_db_conn
 from utils.config import DOUBAN_DRAMA_ID, TABLE_PREFIX
 from utils.logger import setup_logger
 
-setup_logger("logs/insert_low_rating_users.log", logging.INFO)
+LOG_PATH = Path(__file__).resolve().parent.parent / "logs" / "insert_low_rating_users.log"
+setup_logger(log_file=str(LOG_PATH))
 
 LOW_SCORE = 1
 
@@ -38,3 +40,4 @@ def insert_low_rating_users(drama_id):
 
 if __name__ == "__main__":
     insert_low_rating_users(DOUBAN_DRAMA_ID)
+    logging.shutdown()

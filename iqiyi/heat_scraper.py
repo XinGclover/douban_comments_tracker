@@ -10,14 +10,17 @@ from utils.common import safe_float_percent, safe_number
 from utils.config import (DRAMA_TITLE, IQIYI_BASE_URL, IQIYI_HEADERS, TABLE_PREFIX)
 from utils.html_tools import extract_count
 from utils.logger import setup_logger
+from pathlib import Path
 
-setup_logger("logs/iqiyi_heat.log", logging.INFO)
+LOG_PATH = Path(__file__).resolve().parent.parent / "logs" / "iqiyi_heat.log.log"
+setup_logger(log_file=str(LOG_PATH))
+
 
 def extract_movie_stats(drama_url, headers=None):
     """ Extracts movie statistics from the given Douban drama URL.
     :param drama_url: URL of the iqiyi drama page
     :return: dict containing movie statistics such as rating people, total comments, reviews, discussions, and rating percentages
-    """ 
+    """
     response = requests.get(drama_url, headers=headers, timeout=10)
     soup = BeautifulSoup(response.text, 'html.parser')
 
@@ -25,10 +28,10 @@ def extract_movie_stats(drama_url, headers=None):
     effect_score = extract_count(soup, r'\s*(\d+(?:\.\d+)?)\s*', 'i.effect-score')
     hot_link = extract_count(soup, r'第([0-9０-９]+)名', 'a.hot-link')
 
-    return {      
+    return {
         "heat_info": heat_info,
         "effect_score": effect_score,
-        "hot_link": hot_link      
+        "hot_link": hot_link
     }
 
 def insert_movie_stats(movie_stats, db_conn):
@@ -52,17 +55,17 @@ def insert_movie_stats(movie_stats, db_conn):
         hot_link
     )
 
-    with db_conn.cursor() as cursor:   
+    with db_conn.cursor() as cursor:
         cursor.execute(insert_query, params)
         db_conn.commit()
-        logging.info("Inserted movie stats: %s", movie_stats)  
+        logging.info("Inserted movie stats: %s", movie_stats)
 
-def main_loop():   
+def main_loop():
     """ Main loop to fetch and insert movie statistics into the database.
     :return: None
     """
     stats = extract_movie_stats(IQIYI_BASE_URL,IQIYI_HEADERS)
-    
+
     if not stats:
         logging.error("Failed to extract movie stats from %s", IQIYI_BASE_URL)
         return
@@ -76,5 +79,5 @@ def main_loop():
 if __name__ == "__main__":
     logging.info("Starting iQIYI heat scraper for %s", DRAMA_TITLE)
     main_loop()
-  
+    logging.shutdown()
 

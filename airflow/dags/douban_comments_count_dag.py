@@ -22,7 +22,7 @@ with DAG(
     dag_id='douban_comments_count_dag',
     default_args=default_args,
     description='Daily statistics of Douban comments',
-    schedule_interval=timedelta(hours=2),  # Every 2 hours 
+    schedule_interval=timedelta(hours=2),  # Every 2 hours
     start_date=datetime(2025, 6, 23, 8, 0, 0, tzinfo=stockholm_tz),
     catchup=False,
     max_active_runs=1,
@@ -33,3 +33,10 @@ with DAG(
         task_id='run_comments_count',
         bash_command=f'PYTHONPATH={PROJECT_PATH} python3 {PROJECT_PATH}/scraper/douban_comments_count.py'
     )
+
+    run_segmentation = BashOperator(
+        task_id='run_segmentation',
+        bash_command=f'PYTHONPATH={PROJECT_PATH} python3 {PROJECT_PATH}/analysis/jieba_words.py'
+    )
+
+    run_count >> run_segmentation

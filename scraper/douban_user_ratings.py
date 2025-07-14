@@ -1,5 +1,7 @@
-from datetime import datetime
 import logging
+import re
+from datetime import datetime
+from pathlib import Path
 
 import psycopg2
 import requests
@@ -7,13 +9,13 @@ from bs4 import BeautifulSoup
 
 from db import get_db_conn
 from utils.common import safe_sleep
-from utils.config import DOUBAN_DRAMA_ID, COLLECT_HEADERS, DRAMA_TITLE
-from utils.logger import setup_logger
+from utils.config import COLLECT_HEADERS, DOUBAN_DRAMA_ID, DRAMA_TITLE
 from utils.html_tools import extract_count
-import re
+from utils.logger import setup_logger
 
+LOG_PATH = Path(__file__).resolve().parent.parent / "logs" / "douban_user_ratings.log"
+setup_logger(log_file=str(LOG_PATH))
 
-setup_logger("logs/douban_user_ratings.log", logging.INFO)
 
 BASE_URL_PAGES = "https://movie.douban.com/people/{}/collect?start={}&sort=time&rating=all&mode=grid&type=all&filter=all"   # URL for subsequent pages of comments
 
@@ -270,3 +272,4 @@ if __name__ == "__main__":
     logging.info("🚀 Start fetching low rating users of %s", DRAMA_TITLE)
     total = process_db()
     logging.info("📦 A total of %s users of Drama %s were processed ", total, DOUBAN_DRAMA_ID )
+    logging.shutdown()
