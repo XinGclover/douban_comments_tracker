@@ -97,4 +97,5 @@ VIEW_WHITELIST = [
     ("public", f"view_{TABLE_PREFIX}_top_words"),
     ("public", f"view_{TABLE_PREFIX}_daily_top_words"),
     ("public", "view_weibo_stats"),
+    ("public", f"view_{TABLE_PREFIX}_comments_rating_percentage_with_time"),
 ]

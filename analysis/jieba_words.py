@@ -6,6 +6,11 @@ import jieba
 import psycopg2
 
 from db import get_db_conn
+from utils.logger import setup_logger
+from pathlib import Path
+
+LOG_PATH = Path(__file__).resolve().parent.parent / "logs" / "jieba_words.log"
+setup_logger(log_file=str(LOG_PATH))
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 #There are some special words that should be segmented in the way the dict specify.
@@ -78,3 +83,5 @@ def main():
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
     main()
+    logging.shutdown()
+

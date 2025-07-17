@@ -1,9 +1,8 @@
 import logging
 import os
-from datetime import datetime
+
 
 import pandas as pd
-import psycopg2
 
 from utils.config import VIEW_WHITELIST,TABLE_PREFIX
 from utils.logger import setup_logger
@@ -38,9 +37,9 @@ def export_views_to_csv():
             filename = f"{view}.csv"
             filepath = os.path.join(EXPORT_DIR, filename)
             df.to_csv(filepath, index=False)
-            print(f"✅ Exported view {full_view_name} to {filepath}")
+            logging.info(f"✅ Exported view {full_view_name} to {filepath}")
         except pd.errors.DatabaseError as e:
-            print(f"⚠️ Skipped {full_view_name}: {e}")
+            logging.warning(f"⚠️ Skipped {full_view_name}: {e}")
     cursor.close()
     conn.close()
 

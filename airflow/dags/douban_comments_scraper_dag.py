@@ -59,16 +59,17 @@ with DAG(
     dag_id='douban_comments_scraper_dag',
     default_args=default_args,
     description='Scheduled crawling of Douban comments',
-    schedule_interval=timedelta(minutes=45),   # Every 30 minutes
+    schedule_interval=timedelta(hours=1),   # Every 45 minutes
     start_date=datetime(2025, 6, 26, 8, 0, 0, tzinfo=local_tz),
     catchup=False,
     max_active_runs=1,
     tags=['douban', 'comments','zhaoxuelu'],
 ) as dag:
 
-    run_scraper = PythonOperator(
+    run_scraper =  BashOperator(
         task_id='run_douban_scraper',
-        python_callable=run_scraper_conditional,
+        #python_callable=run_scraper_conditional,
+        bash_command=f'PYTHONPATH={PROJECT_PATH} python3 {PROJECT_PATH}/scraper/douban_comments_scraper.py'
     )
 
     run_filter = BashOperator(

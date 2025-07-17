@@ -12,8 +12,10 @@ from utils.config import BASE_URL, DRAMA_TITLE, TABLE_PREFIX
 from utils.config_loader import get_headers
 from utils.html_tools import extract_href_info
 from utils.logger import setup_logger
+from pathlib import Path
 
-setup_logger("logs/douban_comments_scraper.log", logging.INFO)
+LOG_PATH = Path(__file__).resolve().parent.parent / "logs" / "douban_comments_scraper.log"
+setup_logger(log_file=str(LOG_PATH))
 
 BASE_URL_FIRST_PAGE = "{}/comments?limit=20&status=P&sort=time"  # URL for the first page of comments
 BASE_URL_OTHER_PAGES = "{}/comments?start={}&limit=20&status=P&sort=time"   # URL for subsequent pages of comments
@@ -189,5 +191,5 @@ def main_loop():
 if __name__ == "__main__":
     logging.info("🚀 Starting Douban comments scraper for %s", DRAMA_TITLE)
     main_loop()  # Adjust start_page and max_pages as needed
-
+    logging.shutdown()
 

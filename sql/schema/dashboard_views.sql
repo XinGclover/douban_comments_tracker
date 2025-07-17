@@ -38,6 +38,19 @@ WHERE insert_time >= TIMESTAMP '2025-07-13 04:00:00'
 GROUP by rating
 ORDER by rating DESC;
 
+-- Create a view of all ratings percentage changes with time
+--DROP VIEW IF EXISTS view_zhaoxuelu_comments_rating_percentage_with_time;
+
+CREATE OR REPLACE VIEW view_zhaoxuelu_comments_rating_percentage_with_time AS
+SELECT 
+   insert_time,
+   rating, 
+   ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 2) AS rating_percent
+FROM public.zhaoxuelu_comments
+WHERE insert_time >= TIMESTAMP '2025-07-13 04:00:00'
+GROUP by insert_time, rating
+ORDER by rating DESC;
+
 
 -- Create a view of distribution of different ratings in different regions
 --DROP VIEW IF EXISTS view_zhaoxuelu_comments_distribution;
@@ -129,13 +142,15 @@ LIMIT 100;
 
 --Create a view of daily word frequency trend
 --DROP VIEW IF EXISTS view_zhaoxuelu_daily_top_words;
+
 CREATE OR REPLACE VIEW view_zhaoxuelu_daily_top_words AS
 SELECT 
     DATE_TRUNC('day', create_time) AS day,
     word,
     COUNT(*) AS freq
 FROM zhaoxuelu_comment_words
-WHERE create_time >= TIMESTAMP '2025-07-13 04:00:00'
+WHERE create_time >= CURRENT_DATE
+  	AND create_time < CURRENT_DATE + INTERVAL '1 day'
 GROUP BY day, word
 ORDER BY day, freq DESC
 LIMIT 100;
@@ -246,3 +261,8 @@ SELECT
     hot_link
 FROM public.zhaoxuelu_heat_iqiyi
 WHERE insert_time >= TIMESTAMP '2025-07-13 04:00:00';
+
+--Create a view of how many users whose collection have been fetched really(not skip, total amount <=500)
+CREATE OR REPLACE VIEW view_users_with_collection AS
+SELECT COUNT(DISTINCT user_id)
+FROM drama_collection dc;
