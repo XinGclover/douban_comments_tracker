@@ -201,3 +201,17 @@ CREATE TABLE IF NOT EXISTS low_rating_batches (
 );
 
 
+--Create douban group topics
+--DROP TABLE zhaoxuelu_group_topics 
+CREATE TABLE zhaoxuelu_group_topics (
+    topic_id BIGINT PRIMARY KEY,  
+    title TEXT NOT NULL,
+    full_time TIMESTAMP WITH TIME ZONE,  
+    reply_count INTEGER,
+    group_id VARCHAR(20),  
+    group_name TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP  
+);
+
+
+
