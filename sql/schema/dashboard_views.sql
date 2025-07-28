@@ -157,6 +157,7 @@ LIMIT 100;
 
 
 --Create a view of trend of weibo users
+--DROP VIEW IF EXISTS view_weibo_stats;
 CREATE OR REPLACE VIEW view_weibo_stats AS
 SELECT
     u.user_name,
@@ -164,7 +165,8 @@ SELECT
     s.likes_count,
 	s.recorded_at
 FROM weibo_user_stats s
-JOIN weibo_user u ON s.user_id = u.user_id;
+JOIN weibo_user u ON s.user_id = u.user_id
+WHERE recorded_at >= TIMESTAMP '2025-07-13 04:00:00';
 
 
 --Create a view of increment of weibo users, the period is the same as view_weibo_stats
@@ -181,6 +183,7 @@ FROM weibo_user_stats s
 JOIN weibo_user u ON s.user_id = u.user_id;
 
 --Create a view of increment of weibo users every day
+--DROP VIEW IF EXISTS view_weibo_daily_increment;
 CREATE OR REPLACE VIEW view_weibo_daily_increment AS
 WITH daily_snapshot AS (
     SELECT
@@ -188,6 +191,7 @@ WITH daily_snapshot AS (
         DATE(recorded_at) AS stat_date,
         MAX(recorded_at) AS last_recorded_at
     FROM weibo_user_stats
+	WHERE recorded_at >= TIMESTAMP '2025-07-13 04:00:00'
     GROUP BY user_id, DATE(recorded_at)
 ),
 daily_followers AS (

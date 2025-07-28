@@ -20,6 +20,10 @@ setup_logger(log_file=str(LOG_PATH))
 BASE_URL_FIRST_PAGE = "{}/comments?limit=20&status=P&sort=time"  # URL for the first page of comments
 BASE_URL_OTHER_PAGES = "{}/comments?start={}&limit=20&status=P&sort=time"   # URL for subsequent pages of comments
 
+HOT_COMMENT_URL_FIRST_PAGE = "{}/comments?limit=20&status=P&sort=new_score"  # URL for hot comments, not used in this script
+HOT_COMMENT_URL = "{}/comments?start={}&limit=20&status=P&sort=new_score"  # URL for hot comments, not used in this script
+
+
 BATCH_ID = datetime.now().strftime('%Y%m%d%H%M')
 
 def extract_rating(block):
@@ -78,6 +82,13 @@ def get_url(page_num, drama_url):
         start = page_num * 20
         return BASE_URL_OTHER_PAGES.format(drama_url, start)
 
+def get_hot_url(page_num, drama_url):
+    if page_num == 0:
+        return HOT_COMMENT_URL_FIRST_PAGE.format(drama_url)
+    else:
+        start = page_num * 20
+        return HOT_COMMENT_URL.format(drama_url, start)
+
 
 def fetch_comments_page(page_num=0, headers=None, drama_url=BASE_URL):
     """ Fetch comments from a specific page of the drama.
@@ -87,6 +98,7 @@ def fetch_comments_page(page_num=0, headers=None, drama_url=BASE_URL):
     :return: list of dicts, each dict contains comment data
     """
     url = get_url(page_num, drama_url)
+    #url = get_hot_url(page_num, drama_url)
     logging.info("[%s] Fetching: %s", datetime.now(), url)
 
     try:
@@ -158,6 +170,7 @@ def main_loop():
     inserted = 0
     skipped = 0
     for page in range(0, 5):
+    #for page in range(19, 0, -1):  # Adjust the range as needed
         try:
             logging.info("\n📄 Fetching comments on page %s...", page)
             comments = fetch_comments_page(page, headers=request_headers, drama_url=BASE_URL)

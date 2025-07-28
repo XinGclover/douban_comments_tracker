@@ -59,7 +59,8 @@ with DAG(
     dag_id='douban_comments_scraper_dag',
     default_args=default_args,
     description='Scheduled crawling of Douban comments',
-    schedule_interval=timedelta(hours=1),   # Every 45 minutes
+    schedule_interval=timedelta(minutes=30),   # Every 30 minutes
+    #schedule_interval=timedelta(hours=1),  # Every hour
     start_date=datetime(2025, 6, 26, 8, 0, 0, tzinfo=local_tz),
     catchup=False,
     max_active_runs=1,
@@ -77,10 +78,9 @@ with DAG(
         bash_command=f'PYTHONPATH={PROJECT_PATH} python3 {PROJECT_PATH}/scraper/insert_low_rating_users.py'
     )
 
-    send_to_kafka = BashOperator(
-        task_id='run_producer_script',
-        bash_command=f'PYTHONPATH={PROJECT_PATH} python3 {PROJECT_PATH}/kafka_pipeline/producer_send_comments.py',
-    )
+# send_to_kafka = BashOperator(
+#     task_id='run_producer_script',
+#     bash_command=f'PYTHONPATH={PROJECT_PATH} python3 {PROJECT_PATH}/kafka_pipeline/producer_send_comments.py',
+# )
 
-
-    run_scraper >> run_filter >> send_to_kafka
+    run_scraper >> run_filter

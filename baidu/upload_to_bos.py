@@ -10,8 +10,8 @@ load_dotenv()
 BAIDU_AK = os.getenv("BAIDU_AK")
 BAIDU_SK = os.getenv("BAIDU_SK")
 BUCKET_NAME = "zhaoxuelu-dashboard-bucket"
-BOS_BASE_PATH = 'shujuanyimeng'
-LOCAL_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'export', 'shujuanyimeng_view_export'))
+BOS_BASE_PATH = 'zhaoxuelu'
+LOCAL_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'export', 'zhaoxuelu_view_export'))
 
 config = BceClientConfiguration(
     credentials=BceCredentials(BAIDU_AK, BAIDU_SK),
