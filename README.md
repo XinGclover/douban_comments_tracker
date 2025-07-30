@@ -28,35 +28,37 @@ Uses temporal patterns, user activity, and comment sentiment to identify potenti
 * Airflow (planned) – For hourly task scheduling and monitoring
 * Jupyter Notebook – Used for exploratory data analysis and prototyping
 * Metabase – For dashboard creation and visualizations locally
+* Kafka - Real-time streaming of short reviews; enables batch-wise low-rating detection and trigger actions.
+    |
 
-### 🗃 Database Schema ###
+## Project Scripts & Command Reference
+This README provides a structured overview of key scripts and commands used in the project, including environment setup, Airflow, Docker, and Kafka pipeline operations.
 
-| Field Name         | Type              | Description                                                               |
-| ------------------ | ----------------- | ------------------------------------------------------------------------- |
-| `user_id`          | BIGINT            | Unique identifier of the user (not null)                                  |
-| `user_name`        | VARCHAR(60)       | Display name of the user                                                  |
-| `votes`            | INTEGER           | Number of likes received by the comment                                   |
-| `status`           | VARCHAR(10)       | Viewing status (e.g., "Watched", "Want to watch")                         |
-| `rating`           | INTEGER           | User's rating for the show (1 to 5), nullable                             |
-| `user_location`    | VARCHAR(20)       | Reported location of the user (if available)                              |
-| `create_time`      | TIMESTAMP         | Timestamp when the comment was posted (not null)                          |
-| `user_comment`     | TEXT              | Content of the user's comment                                             |
-| `insert_time`      | TIMESTAMP         | Timestamp when the data was inserted into the database (default: `now()`) |
-| `unique_user_time` | UNIQUE CONSTRAINT | Ensures no duplicate records for the same user and comment time           |
+| Category          | Script/Command                                               | Description                                                                 | Example Usage                                 |
+|-------------------|--------------------------------------------------------------|-----------------------------------------------------------------------------|-----------------------------------------------|
+| Cookie Management | `update_cookie.py`                                           | Save cookies from a logged-in session to a file (run manually weekly)       | `python update_cookie.py`                      |
+| Environment Setup | `env_airflow.sh`                                             | Configure the Airflow environment (must run in each terminal session)       | `source env_airflow.sh`                        |
+| Airflow Users     | `airflow users list`                                         | Verify if an Airflow user exists                                            | Output includes `admin` user details           |
+| Web UI            | `airflow webserver --port 8080`                              | Start Airflow Web Server UI                                                 | Open browser: `http://localhost:8080`          |
+| Scheduler         | `airflow scheduler`                                          | Start Airflow Scheduler to trigger DAGs                                     | —                                              |
+| PostgreSQL        | `brew services start postgresql@16`                          | Start PostgreSQL 16 as a background service (auto-start on boot)            | Check with `brew services list`                |
+| Docker Logs       | `docker logs -f metabase`                                    | View real-time logs of the Metabase container                               | —                                              |
+| Docker Start      | `docker start zhaoxuelu`                                     | Start a Docker container                                                    | —                                              |
+| Docker Stop       | `docker stop zhaoxuelu`                                      | Stop a Docker container                                                     | —                                              |
+| Docker Remove     | `docker rm -f metabase`                                      | Force remove a Docker container                                             | —                                              |
+| Kafka Start       | `docker-compose up -d`                                       | Start Kafka and Zookeeper services via Docker                               | `cd kafka_docker && docker-compose up -d`      |
+| Kafka Stop        | `bash scripts/stop_kafka.sh`                                 | Stop all Kafka and Zookeeper containers                                     | —                                              |
+| Kafka Quick Start | `bash scripts/start_kafka.sh`                                | Shortcut to start all Kafka services                                        | Recommended startup method                     |
 
-## Utility Scripts
-This project provides some auxiliary scripts to facilitate development and data processing:
-- #### Switch environment of Airflow ####
-env_airflow.sh              
-source env_airflow.sh
-- #### Save cookies from a logged-in session to a file, we can run the script once a week manually ####
-update_cookie.py
+## Mind Map
+
+![](/images/mindmap.png)
 
 
 ## Visualization Result
 
-![](/images/shujuan_1.png)
-![](/images/shujuan_2.png)
+![](/images/zhaoxuelu.png)
+
 
 ## Disclaimer
 

@@ -1,8 +1,8 @@
 #!/bin/bash
 
 BUCKET="zhaoxuelu-dashboard-bucket"
-LOCAL_DIR="./export/shujuanyimeng_view_export"
-DEST_DIR="shujuanyimeng" 
+LOCAL_DIR="./export/zhaoxuelu_view_export"
+DEST_DIR="zhaoxuelu" 
 
 for file_path in "$LOCAL_DIR"/*; do
     file_name=$(basename "$file_path")

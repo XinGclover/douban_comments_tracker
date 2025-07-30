@@ -39,4 +39,9 @@ with DAG(
         bash_command=f'PYTHONPATH={PROJECT_PATH} python3 {PROJECT_PATH}/analysis/jieba_words.py'
     )
 
-    run_count >> run_segmentation
+    run_group_topics = BashOperator(
+        task_id='run_group_topics',
+        bash_command=f'PYTHONPATH={PROJECT_PATH} python3 {PROJECT_PATH}/scraper/douban_group_topics_scraper.py'
+    )
+
+    run_count >> run_segmentation >> run_group_topics
