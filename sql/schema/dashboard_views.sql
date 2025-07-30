@@ -156,6 +156,19 @@ ORDER BY day, freq DESC
 LIMIT 100;
 
 
+
+--Create a view of top words of rating=1
+CREATE OR REPLACE VIEW view_zhaoxuelu_top_words_rating1 AS
+SELECT 
+    word,
+    COUNT(*) AS freq
+FROM zhaoxuelu_comment_words
+WHERE create_time >= TIMESTAMP '2025-07-13 04:00:00' 
+GROUP BY word
+ORDER BY freq DESC
+LIMIT 100;
+
+
 --Create a view of trend of weibo users
 --DROP VIEW IF EXISTS view_weibo_stats;
 CREATE OR REPLACE VIEW view_weibo_stats AS
@@ -167,6 +180,8 @@ SELECT
 FROM weibo_user_stats s
 JOIN weibo_user u ON s.user_id = u.user_id
 WHERE recorded_at >= TIMESTAMP '2025-07-13 04:00:00';
+
+
 
 
 --Create a view of increment of weibo users, the period is the same as view_weibo_stats

@@ -111,7 +111,7 @@ def main_loop():
     conn = get_db_conn()
     request_headers = get_headers()
 
-    for page in range(0,2):  # Adjust range as needed
+    for page in range(0,1):  # Adjust range as needed
         try:
             logging.info("\n📄 Fetching topics on page %s...", page)
             topics = fetch_topic_page(page, headers=request_headers)
