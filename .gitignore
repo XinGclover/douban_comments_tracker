@@ -211,7 +211,7 @@ sql/query.sql
 /backup/
 /export/
 
-/images/
+#/images/
 
 
 # Ignore everything under airflow
