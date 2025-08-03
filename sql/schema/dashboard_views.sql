@@ -390,4 +390,43 @@ GROUP BY
     group_name
 ORDER BY
     topic_count DESC;
+	
+--Create a view of board of hot search and TV rank 热搜榜，电视剧榜	
+CREATE OR REPLACE VIEW view_iqiyi_hotsearch_ranking AS
+SELECT
+    ranking,
+    title,
+    category,
+    collected_at
+FROM
+    iqiyi_rank_titles
+WHERE
+    batch_id = (
+        SELECT batch_id
+        FROM iqiyi_rank_titles
+        ORDER BY collected_at DESC
+        LIMIT 1
+    )
+ORDER BY
+    ranking ASC;
+
+--热播榜
+CREATE OR REPLACE VIEW view_iqiyi_tv_ranking AS
+SELECT
+    order_index,
+    title,
+	main_index,
+    collected_at
+FROM
+    iqiyi_rank_dramas
+WHERE
+    batch_id = (
+        SELECT batch_id
+        FROM iqiyi_rank_dramas
+        ORDER BY collected_at DESC
+        LIMIT 1
+    )
+ORDER BY
+    order_index ASC;
+
 

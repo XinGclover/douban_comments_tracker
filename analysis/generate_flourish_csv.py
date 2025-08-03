@@ -17,10 +17,20 @@ views_config = {
         "date_col": "comment_day",
         "value_col": "cumulative_count"
     },
-    "view_suspense_daily": {
-        "drama_col": "name",
-        "date_col": "day",
-        "value_col": "count_sum"
+    "view_iqiyi_hotsearch_ranking": {
+        "drama_col": "title",
+        "date_col": "collected_at",
+        "value_col": "ranking"
+    },
+    "view_iqiyi_tv_ranking": {
+        "drama_col": "title",
+        "date_col": "collected_at",
+        "value_col": "order_index"
+    },
+    "view_zhaoxuelu_topics_groups_with_time": {
+        "drama_col": "group_name",
+        "date_col": "full_time",
+        "value_col": "topic_count"
     }
 }
 

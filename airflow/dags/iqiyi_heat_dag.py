@@ -40,4 +40,9 @@ with DAG(
         bash_command=f'PYTHONPATH={PROJECT_PATH} python3 {PROJECT_PATH}/iqiyi/hot_search.py'
     )
 
-    run_heat >> run_hot_search
+    run_tv_rank = BashOperator(
+        task_id='run_iqiyi_tv_rank',
+        bash_command=f'PYTHONPATH={PROJECT_PATH} python3 {PROJECT_PATH}/iqiyi/tv_rank.py'
+    )
+
+    run_heat >> run_hot_search >> run_tv_rank

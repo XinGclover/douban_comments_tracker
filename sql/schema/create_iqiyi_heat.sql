@@ -170,7 +170,7 @@ VALUES
 SHOW TIMEZONE;
 
 
---Create table of hot-search rank and TV rank
+--Create table of hot-search rank and TV rank 热搜榜 电视剧榜
 CREATE TABLE iqiyi_rank_titles (
     id SERIAL PRIMARY KEY,
 	batch_id UUID NOT NULL,
@@ -180,6 +180,18 @@ CREATE TABLE iqiyi_rank_titles (
     collected_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+--Create table of rank of TV dramas 热播榜
+CREATE TABLE iqiyi_rank_dramas (
+    title TEXT NOT NULL,
+    bullet_index TEXT,
+    rec_index TEXT,
+    main_index TEXT,
+    tvid VARCHAR(20) NOT NULL,
+    order_index INTEGER,
+    collected_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    batch_id TEXT NOT NULL,
+    PRIMARY KEY (batch_id, tvid)
+);
 
 
 
