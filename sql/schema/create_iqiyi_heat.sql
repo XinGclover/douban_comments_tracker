@@ -170,5 +170,16 @@ VALUES
 SHOW TIMEZONE;
 
 
+--Create table of hot-search rank and TV rank
+CREATE TABLE iqiyi_rank_titles (
+    id SERIAL PRIMARY KEY,
+	batch_id UUID NOT NULL,
+	ranking INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    category TEXT NOT NULL,
+    collected_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+
 
 

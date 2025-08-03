@@ -34,3 +34,10 @@ with DAG(
         bash_command=f'PYTHONPATH={PROJECT_PATH} python3 {PROJECT_PATH}/iqiyi/heat_scraper.py'
     )
 
+
+    run_hot_search = BashOperator(
+        task_id='run_iqiyi_hot_search',
+        bash_command=f'PYTHONPATH={PROJECT_PATH} python3 {PROJECT_PATH}/iqiyi/hot_search.py'
+    )
+
+    run_heat >> run_hot_search
