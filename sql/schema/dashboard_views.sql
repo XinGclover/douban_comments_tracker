@@ -51,17 +51,6 @@ WHERE insert_time >= TIMESTAMP '2025-07-13 04:00:00'
 GROUP by insert_time, rating
 ORDER by rating DESC;
 
--- Create a view of all ratings percentage changes dayily
-CREATE OR REPLACE VIEW view_zhaoxuelu_comments_rating_percentage_daily AS
-SELECT 
-   DATE(insert_time) AS comment_date,
-   rating, 
-   ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (PARTITION BY DATE(insert_time)), 2) AS rating_percent
-FROM public.zhaoxuelu_comments
-WHERE insert_time >= TIMESTAMP '2025-07-13 04:00:00'
-GROUP BY DATE(insert_time), rating
-ORDER BY comment_date, rating DESC;
-
 
 
 -- Create a view of distribution of different ratings in different regions
@@ -188,33 +177,6 @@ WITH ranked_dramas AS (
 SELECT *
 FROM ranked_dramas
 WHERE rank <= 10;
-
-
---DROP VIEW IF EXISTS view_cumulative_top20_dramas_per_day;
-CREATE OR REPLACE VIEW view_cumulative_top20_dramas_per_day AS
-WITH cumulative_counts AS (
-    SELECT
-        comment_day,
-        drama_name,
-        SUM(high_rating_user_count) OVER (
-            PARTITION BY drama_name
-            ORDER BY comment_day
-            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-        ) AS cumulative_count
-    FROM view_high_rating_dramas_source_zhaoxuelu_with_time
-),
-ranked AS (
-    SELECT
-        comment_day,
-        drama_name,
-        cumulative_count,
-        ROW_NUMBER() OVER (PARTITION BY comment_day ORDER BY cumulative_count DESC) AS rank
-    FROM cumulative_counts
-)
-SELECT *
-FROM ranked
-WHERE rank <= 20;
-
 
 
 
@@ -382,14 +344,17 @@ FROM drama_collection dc;
 --Create a view of calculate group topics about zhaoxuelu
 CREATE OR REPLACE VIEW view_zhaoxuelu_topics_groups AS
 SELECT
+    group_id,
     group_name,
     COUNT(*) AS topic_count
 FROM
     zhaoxuelu_group_topics
 GROUP BY
-    group_name
+    group_id,group_name
 ORDER BY
     topic_count DESC;
+	
+
 	
 --Create a view of board of hot search and TV rank 热搜榜，电视剧榜	
 CREATE OR REPLACE VIEW view_iqiyi_hotsearch_ranking AS
@@ -430,3 +395,10 @@ ORDER BY
     order_index ASC;
 
 
+CREATE OR REPLACE VIEW  view_iqiyi_rank_titles_with_time AS
+SELECT
+	ranking,
+    title,
+    category,
+    collected_at AT TIME ZONE 'Asia/Shanghai' AS collected_at_shanghai
+FROM iqiyi_rank_titles;
