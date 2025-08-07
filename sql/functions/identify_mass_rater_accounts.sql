@@ -41,3 +41,5 @@ suspicious_users AS (
 
 SELECT * FROM suspicious_users
 ORDER BY suspicion_level DESC, total_ratings DESC;
+
+

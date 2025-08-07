@@ -2,6 +2,7 @@ import logging
 import re
 from datetime import datetime
 from pathlib import Path
+import time
 
 import psycopg2
 import requests
@@ -19,7 +20,7 @@ setup_logger(log_file=str(LOG_PATH))
 
 BASE_URL_PAGES = "https://movie.douban.com/people/{}/collect?start={}&sort=time&rating=all&mode=grid&type=all&filter=all"   # URL for subsequent pages of comments
 
-AMOUNT_LIMIT = 10
+AMOUNT_LIMIT = 4
 AMOUNT_MOST_RATING = 500
 EARLIEST_YEAR = 2022
 
@@ -162,7 +163,10 @@ def fetch_one_page(page_num, headers, user_id):
     collect_url = BASE_URL_PAGES.format(user_id, start)
 
     try:
+        start_time = time.time()
         resp = requests.get(collect_url, headers=headers, timeout=10)
+        logging.info(f"🌐 GET request for user {user_id}, page {page_num} took {time.time() - start_time:.2f}s")
+
         if resp.status_code != 200:
             return None, None, None
 
@@ -202,6 +206,7 @@ def fetch_user_collect(user_id, headers, cursor, conn):
         inserted += ins
         skipped += ski
         conn.commit()
+        logging.info("📊 User %s, page 1: Inserted %s, Skipped %s", user_id, ins, ski)
         safe_sleep(10,15)
         if stop_reason:
             return inserted, skipped, total_dramas, stop_reason
@@ -214,6 +219,7 @@ def fetch_user_collect(user_id, headers, cursor, conn):
         inserted += ins
         skipped += ski
         conn.commit()
+        logging.info("📊 User %s, page %s: Inserted %s, Skipped %s", user_id, page, ins, ski)
         safe_sleep(10,15)
         if stop_reason:
             return inserted, skipped, total_dramas, stop_reason

@@ -52,6 +52,7 @@ GROUP by insert_time, rating
 ORDER by rating DESC;
 
 
+
 -- Create a view of distribution of different ratings in different regions
 --DROP VIEW IF EXISTS view_zhaoxuelu_comments_distribution;
 
@@ -101,6 +102,7 @@ WHERE insert_time >= TIMESTAMP '2025-07-13 04:00:00';
 
 
 --Create a view of high rating dramas by low rating users for one source drama
+--DROP VIEW IF EXISTS view_high_rating_dramas_source; 
 CREATE OR REPLACE VIEW view_high_rating_dramas_source AS
 SELECT
     l.drama_id AS source_drama_id,
@@ -115,7 +117,27 @@ WHERE c.rating = 5
 GROUP BY l.drama_id, c.drama_id, d.drama_name
 ORDER BY l.drama_id, high_rating_user_count DESC;
 
+--Create a view of high rating dramas by low rating users for one source drama with time
+--DROP VIEW IF EXISTS view_high_rating_dramas_source_with_time; 
+CREATE OR REPLACE VIEW view_high_rating_dramas_source_with_time AS
+SELECT
+    l.user_id,
+    l.drama_id AS source_drama_id,
+    c.drama_id AS high_rating_drama_id,
+    d.drama_name,
+    COUNT(DISTINCT c.user_id) AS high_rating_user_count,
+	l.comment_time
+FROM low_rating_users l
+JOIN drama_collection c ON l.user_id = c.user_id
+JOIN douban_drama_info d ON c.drama_id = d.drama_id
+WHERE c.rating = 5
+  AND c.drama_id <> l.drama_id  
+GROUP BY l.drama_id, c.drama_id, d.drama_name,l.comment_time, l.user_id
+ORDER BY l.drama_id, high_rating_user_count DESC;
+
+
 --Create a view of high rating dramas by low rating users for zhaoxuelu
+--DROP VIEW IF EXISTS view_high_rating_dramas_source_zhaoxuelu;
 CREATE OR REPLACE VIEW view_high_rating_dramas_source_zhaoxuelu AS
 SELECT
     high_rating_drama_id,
@@ -124,6 +146,38 @@ SELECT
 FROM view_high_rating_dramas_source
 WHERE source_drama_id = '36317401'    
 ORDER BY high_rating_user_count DESC;
+
+
+--Create a view of high rating dramas by low rating users for zhaoxuelu changes with date
+--DROP VIEW IF EXISTS view_high_rating_dramas_source_zhaoxuelu_with_time;
+CREATE OR REPLACE VIEW view_high_rating_dramas_source_zhaoxuelu_with_time AS
+SELECT
+    high_rating_drama_id,
+    drama_name,
+    COUNT(DISTINCT user_id) AS high_rating_user_count,
+    DATE(comment_time) AS comment_day    
+FROM view_high_rating_dramas_source_with_time
+WHERE source_drama_id = '36317401'
+GROUP BY high_rating_drama_id, drama_name, comment_day
+ORDER BY comment_day, high_rating_user_count DESC;
+
+
+--Create a view of Top 10 high rating dramas by low rating users for zhaoxuelu changes with date
+--DROP VIEW IF EXISTS view_high_rating_dramas_daily_top;
+CREATE OR REPLACE VIEW view_high_rating_dramas_daily_top AS
+WITH ranked_dramas AS (
+    SELECT
+        high_rating_drama_id,
+        drama_name,
+        high_rating_user_count,
+        comment_day,
+        ROW_NUMBER() OVER (PARTITION BY comment_day ORDER BY high_rating_user_count DESC) AS rank
+    FROM view_high_rating_dramas_source_zhaoxuelu_with_time
+)
+SELECT *
+FROM ranked_dramas
+WHERE rank <= 10;
+
 
 
 --Create a view of all high frequency words
@@ -285,3 +339,74 @@ WHERE insert_time >= TIMESTAMP '2025-07-13 04:00:00';
 CREATE OR REPLACE VIEW view_users_with_collection AS
 SELECT COUNT(DISTINCT user_id)
 FROM drama_collection dc;
+
+
+--Create a view of calculate group topics about zhaoxuelu
+CREATE OR REPLACE VIEW view_zhaoxuelu_topics_groups AS
+SELECT
+    group_id,
+    group_name,
+    COUNT(*) AS topic_count
+FROM
+    zhaoxuelu_group_topics
+GROUP BY
+    group_id,group_name
+ORDER BY
+    topic_count DESC;
+	
+
+	
+--Create a view of board of hot search and TV rank 热搜榜，电视剧榜	
+CREATE OR REPLACE VIEW view_iqiyi_hotsearch_ranking AS
+SELECT
+    ranking,
+    title,
+    category,
+    collected_at
+FROM
+    iqiyi_rank_titles
+WHERE
+    batch_id = (
+        SELECT batch_id
+        FROM iqiyi_rank_titles
+        ORDER BY collected_at DESC
+        LIMIT 1
+    )
+ORDER BY
+    ranking ASC;
+
+--热播榜
+CREATE OR REPLACE VIEW view_iqiyi_tv_ranking AS
+SELECT
+    order_index,
+    title,
+	main_index,
+    collected_at
+FROM
+    iqiyi_rank_dramas
+WHERE
+    batch_id = (
+        SELECT batch_id
+        FROM iqiyi_rank_dramas
+        ORDER BY collected_at DESC
+        LIMIT 1
+    )
+ORDER BY
+    order_index ASC;
+
+
+CREATE OR REPLACE VIEW  view_iqiyi_rank_titles_with_time AS
+SELECT
+	ranking,
+    title,
+    category,
+    collected_at AT TIME ZONE 'Asia/Shanghai' AS collected_at_shanghai
+FROM iqiyi_rank_titles;
+
+
+CREATE OR REPLACE VIEW  view_iqiyi_rank_dramas_with_time AS
+SELECT
+    title,
+    main_index,
+    collected_at AT TIME ZONE 'Asia/Shanghai' AS collected_at_shanghai
+FROM iqiyi_rank_dramas;
