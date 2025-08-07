@@ -185,7 +185,7 @@ CREATE TABLE iqiyi_rank_dramas (
     title TEXT NOT NULL,
     bullet_index TEXT,
     rec_index TEXT,
-    main_index TEXT,
+    main_index INTEGER,   --2025.08.07change from text to INTEGER
     tvid VARCHAR(20) NOT NULL,
     order_index INTEGER,
     collected_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -193,5 +193,7 @@ CREATE TABLE iqiyi_rank_dramas (
     PRIMARY KEY (batch_id, tvid)
 );
 
-
+ALTER TABLE iqiyi_rank_dramas
+ALTER COLUMN main_index TYPE INTEGER
+USING main_index::INTEGER;
 

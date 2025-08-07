@@ -59,6 +59,8 @@ This README provides a structured overview of key scripts and commands used in t
 
 ![](/images/zhaoxuelu.png)
 
+![](/images/5rating_dramas.gif)
+
 
 ## Disclaimer
 

@@ -402,3 +402,11 @@ SELECT
     category,
     collected_at AT TIME ZONE 'Asia/Shanghai' AS collected_at_shanghai
 FROM iqiyi_rank_titles;
+
+
+CREATE OR REPLACE VIEW  view_iqiyi_rank_dramas_with_time AS
+SELECT
+    title,
+    main_index,
+    collected_at AT TIME ZONE 'Asia/Shanghai' AS collected_at_shanghai
+FROM iqiyi_rank_dramas;

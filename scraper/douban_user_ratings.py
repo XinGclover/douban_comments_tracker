@@ -20,7 +20,7 @@ setup_logger(log_file=str(LOG_PATH))
 
 BASE_URL_PAGES = "https://movie.douban.com/people/{}/collect?start={}&sort=time&rating=all&mode=grid&type=all&filter=all"   # URL for subsequent pages of comments
 
-AMOUNT_LIMIT = 8
+AMOUNT_LIMIT = 4
 AMOUNT_MOST_RATING = 500
 EARLIEST_YEAR = 2022
 
