@@ -410,3 +410,66 @@ SELECT
     main_index,
     collected_at AT TIME ZONE 'Asia/Shanghai' AS collected_at_shanghai
 FROM iqiyi_rank_dramas;
+
+
+CREATE OR REPLACE VIEW iqiyi_mainindex_ranking_for_looker AS
+SELECT 
+    date_trunc('minute', d.collected_at) AS minute_time,
+    d.title,
+    CAST(d.main_index AS TEXT) AS main_index_str,
+    CAST(t.ranking AS TEXT) AS ranking_str
+FROM 
+    iqiyi_rank_dramas d
+JOIN 
+    iqiyi_rank_titles t
+    ON date_trunc('minute', d.collected_at) = date_trunc('minute', t.collected_at)
+    AND d.title = t.title
+WHERE 
+    d.main_index IS NOT NULL
+    AND t.ranking IS NOT NULL
+    AND d.title = '定风波'
+ORDER BY 
+    minute_time, title;
+
+
+CREATE OR REPLACE VIEW public.view_zhaoxuelu_heat_iqiyi_daily_drop AS
+WITH daily_max AS (
+    SELECT 
+        DATE(insert_time AT TIME ZONE 'Europe/Stockholm') AS heat_date,
+        MAX(heat_info) AS max_heat_info
+    FROM public.zhaoxuelu_heat_iqiyi
+    WHERE insert_time >= '2025-07-28'
+    GROUP BY DATE(insert_time AT TIME ZONE 'Europe/Stockholm')
+),
+first_day_value AS (
+    SELECT max_heat_info AS first_max_heat
+    FROM daily_max
+    ORDER BY heat_date
+    LIMIT 1
+)
+SELECT
+    dm.heat_date,
+    dm.max_heat_info,
+    LAG(dm.max_heat_info) OVER (ORDER BY dm.heat_date) AS prev_max_heat_info,
+    CASE 
+        WHEN LAG(dm.max_heat_info) OVER (ORDER BY dm.heat_date) IS NULL 
+        THEN NULL
+        ELSE ABS(dm.max_heat_info - LAG(dm.max_heat_info) OVER (ORDER BY dm.heat_date))
+    END AS change_amount,
+    CASE 
+        WHEN LAG(dm.max_heat_info) OVER (ORDER BY dm.heat_date) IS NULL 
+        THEN NULL
+        ELSE ROUND(
+            ABS(dm.max_heat_info - LAG(dm.max_heat_info) OVER (ORDER BY dm.heat_date)) 
+            / LAG(dm.max_heat_info) OVER (ORDER BY dm.heat_date)::NUMERIC * 100, 
+            2
+        )::NUMERIC(10,2)
+    END AS change_pct,
+    ROUND(
+        ((SELECT first_max_heat FROM first_day_value) - dm.max_heat_info)::NUMERIC
+        / (SELECT first_max_heat FROM first_day_value)::NUMERIC * 100, 
+        2
+    )::NUMERIC(10,2) AS cumulative_drop_pct
+FROM daily_max dm
+ORDER BY dm.heat_date;
+

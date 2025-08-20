@@ -214,4 +214,36 @@ CREATE TABLE zhaoxuelu_group_topics (
 );
 
 
+--Create douban group topics
+--DROP TABLE other_group_topics 
+CREATE TABLE other_group_topics (
+    topic_id BIGINT PRIMARY KEY,  
+    title TEXT NOT NULL,
+    full_time TIMESTAMP WITH TIME ZONE,  
+    reply_count INTEGER,
+    group_id VARCHAR(20),  
+    group_name TEXT,
+	status VARCHAR(10),
+	key_word VARCHAR(20),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP  
+);
+
+
+
+--Create douban post comments
+--DROP TABLE douban_post
+CREATE TABLE douban_post(
+    topic_id BIGINT,
+	user_id VARCHAR(20),  
+    user_name TEXT,  
+    pubtime TIMESTAMP WITHOUT TIME ZONE,
+	ip VARCHAR(20),
+	comment_text TEXT NOT NULL,
+	like_count INTEGER,
+	CONSTRAINT douban_post_unique UNIQUE (topic_id, user_id, pubtime)
+);
+
+TRUNCATE TABLE douban_post;
+
+
 
