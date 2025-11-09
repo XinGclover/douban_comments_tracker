@@ -22,7 +22,7 @@ with DAG(
     dag_id='douban_comments_count_dag',
     default_args=default_args,
     description='Daily statistics of Douban comments',
-    schedule_interval=timedelta(hours=4),  # Every 2 hours
+    schedule_interval=timedelta(hours=6),  # Every 6 hours
     start_date=datetime(2025, 6, 23, 8, 0, 0, tzinfo=stockholm_tz),
     catchup=False,
     max_active_runs=1,
