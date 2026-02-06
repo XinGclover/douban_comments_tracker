@@ -246,4 +246,35 @@ CREATE TABLE douban_post(
 TRUNCATE TABLE douban_post;
 
 
+--Create group members
+-- DROP TABLE douban_group_members
+CREATE TABLE IF NOT EXISTS douban_group_members (
+  group_id      INT NOT NULL,
+  member_id     TEXT NOT NULL,
+  member_name   TEXT,
+  img_url   	TEXT,
+  first_seen_at TIMESTAMP NOT NULL DEFAULT now(),
+  PRIMARY KEY (group_id, member_id)
+);
+
+
+--Create group table
+--DROP TABLE douban_groups;
+CREATE TABLE IF NOT EXISTS douban_groups (
+  group_id        INT PRIMARY KEY,
+  group_name      TEXT NOT NULL,
+  group_who       TEXT,
+  max_page        INT,
+  is_active       BOOLEAN DEFAULT true,
+  created_at      TIMESTAMP NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMP,
+  last_crawled_at TIMESTAMP
+);
+
+
+
+
+
+
+
 
