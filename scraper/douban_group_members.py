@@ -21,6 +21,14 @@ MEMBERS_URL = "https://www.douban.com/group/{}/members?start={}"  # start: 0, 36
 PEOPLE_ID_RE = re.compile(r"/people/(\d+)/")
 PAGE_SIZE = 36
 
+SELECT_GROUPS_SQL = """
+SELECT group_id, group_name, group_who, max_page
+    FROM douban_groups
+    WHERE is_active = TRUE
+        AND last_crawled_at IS NULL
+    ORDER BY group_id;
+"""
+
 INSERT_MEMBER_SQL = """
 INSERT INTO douban_group_members (
   group_id,
@@ -32,15 +40,15 @@ ON CONFLICT (group_id, member_id) DO NOTHING
 RETURNING member_id;
 """
 
+UPDATE_LAST_CRAWLED_SQL = """
+UPDATE douban_groups
+SET last_crawled_at = now()
+WHERE group_id = %s;
+"""
+
 def load_groups_from_db(conn):
-    sql = """
-    SELECT group_id, group_name, group_who, max_page
-    FROM douban_groups
-    WHERE is_active = TRUE
-    ORDER BY group_id;
-    """
     with conn.cursor() as cursor:
-        cursor.execute(sql)
+        cursor.execute(SELECT_GROUPS_SQL)
         rows = cursor.fetchall()
 
     return [
@@ -137,6 +145,7 @@ def main():
                 max_page = int(g.get("max_page", 0))
 
                 logging.info("🚀 Start group %s (%s), max_page=%s", group_id, group_name, max_page)
+                group_failed = False
 
                 # page: 0..max_page-1  -> start: 0,36,...,(max_page-1)*36
                 for page in range(max_page):
@@ -165,11 +174,19 @@ def main():
 
                     except (requests.exceptions.RequestException, psycopg2.Error) as e:
                         conn.rollback()
+                        group_failed = True
                         logging.error("❌ Group %s start=%s failed: %s (rollback)", group_id, start, e)
                         # if failed, it can continue to next page, or you can choose to break to stop crawling this group
                         continue
 
                     time.sleep(10)
+                # only update last_crawled_at if all pages are processed without exceptions, otherwise we may miss some members in next crawl and it's hard to know which page is affected
+                if not group_failed:
+                    cursor.execute(UPDATE_LAST_CRAWLED_SQL, (group_id,))
+                    conn.commit()
+                    logging.info("🕒 Updated last_crawled_at for group %s", group_id)
+                else:
+                    logging.warning("⚠️ Group %s had failures; last_crawled_at NOT updated", group_id)
 
     finally:
         conn.close()

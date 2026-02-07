@@ -250,7 +250,7 @@ TRUNCATE TABLE douban_post;
 -- DROP TABLE douban_group_members
 CREATE TABLE IF NOT EXISTS douban_group_members (
   group_id      INT NOT NULL,
-  member_id     TEXT NOT NULL,
+  member_id     VARCHAR(20) NOT NULL,
   member_name   TEXT,
   img_url   	TEXT,
   first_seen_at TIMESTAMP NOT NULL DEFAULT now(),
