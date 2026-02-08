@@ -271,6 +271,53 @@ CREATE TABLE IF NOT EXISTS douban_groups (
   last_crawled_at TIMESTAMP
 );
 
+---------------------------------------------------------------------------
+--2026.2.8 focus on black post
+-- Create table of raw date of post(2.0)
+CREATE TABLE IF NOT EXISTS public.douban_topic_post_raw
+(
+    -- Topic / Thread
+    topic_id        bigint NOT NULL,             -- topic ID
+    topic_title     text,                         -- topic title（with value in OP）
+    topic_url       text,                         -- for backtrack / debug
+
+    -- Post identity
+    post_type       text NOT NULL,                -- 'op' | 'reply'
+    floor_no        integer,                      -- op=0, reply=1,2,3...
+    
+    -- Author
+    user_id         varchar(20),                  -- UID
+    user_name       text,
+    is_op_author    boolean NOT NULL DEFAULT false,
+
+    -- Content
+    content_text    text NOT NULL,                -- raw text without cleaning
+    like_count      integer,
+
+    -- Meta
+    pubtime         timestamp without time zone,
+    ip_location     varchar(20),
+
+    -- Crawl metadata
+    crawled_at      timestamp without time zone NOT NULL DEFAULT now(),
+    crawler_version text,
+
+    -- Uniqueness
+    CONSTRAINT pk_douban_topic_post_raw
+        PRIMARY KEY (topic_id, post_type, floor_no)
+);
+
+CREATE INDEX IF NOT EXISTS idx_douban_raw_topic_time
+ON public.douban_topic_post_raw(topic_id, pubtime);
+
+CREATE INDEX IF NOT EXISTS idx_douban_raw_post_type
+ON public.douban_topic_post_raw(post_type);
+
+CREATE INDEX IF NOT EXISTS idx_douban_raw_user
+ON public.douban_topic_post_raw(user_id);
+
+
+
 
 
 

@@ -10,6 +10,7 @@ from utils.config_loader import get_headers
 from utils.logger import setup_logger
 from pathlib import Path
 from utils.html_tools import extract_href_info, extract_count
+from utils.config import POST_LIST
 
 
 LOG_PATH = Path(__file__).resolve().parent.parent / "logs" / "douban_post_scraper.log"
@@ -19,307 +20,249 @@ setup_logger(log_file=str(LOG_PATH))
 BASE_URL_PAGE = "https://www.douban.com/group/topic/{}/?start={}"
 
 
-post_list = [
-    {
-        "topic_id": "341265141",
-        "start": 0,
-        "end": 6,
-        "title": "午夜钟声⏳｜11🈷️永夜森林🌳 "
-    },
-    {
-        "topic_id": "341265185",
-        "start": 0,
-        "end": 6,
-        "title": "午夜钟声⏳｜11🈷️公主🧚‍♀️茶话会"
-    }
-    # {
-    #     "topic_id": "338469865",
-    #     "start": 20,
-    #     "end": 25,
-    #     "title": "午夜钟声⏳｜10🈷️公主🧚‍♀️茶话会"
-    # },
-    # {
-    #     "topic_id": "338736980",
-    #     "start": 13,
-    #     "end": 22,
-    #     "title": "午夜钟声⏳｜🔟🈷️永夜森林🌳 "
-    # },
-    # {
-    #     "topic_id": "334175701",
-    #     "start": 50,
-    #     "end": 51,
-    #     "title": "午夜钟声⏳｜八月公主🧚‍♀️茶话会2.0"
-    # },
-    # {
-    #     "topic_id": "334501225",
-    #     "start": 54,
-    #     "end": 56,
-    #     "title": "午夜钟声⏳｜八月公主🧚‍♀️茶话会3.0 "
-    # },
-    # {
-    #     "topic_id": "334984342",
-    #     "start": 56,
-    #     "end": 58,
-    #     "title": "午夜钟声⏳｜八月公主🧚‍♀️茶话会4.0 "
-    # },
-    # {
-    #     "topic_id": "335670877",
-    #     "start": 51,
-    #     "end": 52,
-    #     "title": "午夜钟声⏳｜九月公主🧚‍♀️茶话会1.0 "
-    # },
-    # {
-    #     "topic_id": "335673488",
-    #     "start": 59,
-    #     "end": 61,
-    #     "title": "午夜钟声⏳｜9️⃣🈷️永夜森林🌳 "
-    # },
-    # {
-    #     "topic_id": "336517564",
-    #     "start": 25,
-    #     "end": 27,
-    #     "title": "午夜钟声⏳｜9🈷️公主🧚‍♀️茶话会2.0 "
-    # },
-    # {
-    #     "topic_id": "333355524",
-    #     "start": 0,
-    #     "end": 14,
-    #     "title": "真爱之舞💃｜有人考古过这个cut吗？"
-    # },
-    # {
-    #     "topic_id": "334455247",
-    #     "start": 80,
-    #     "end": 81,
-    #     "title": "午夜钟声⏳｜永夜森林🌳"
-    # },
-    # {
-    #     "topic_id": "335667914",
-    #     "start": 7,
-    #     "end": 8,
-    #     "title": "真爱之舞💃｜突然发现一个点，可能是🐢🍬且CPN严重，想🍑一下 "
-    # },
-    # {
-    #     "topic_id": "333177149",
-    #     "start": 0,
-    #     "end": 13,
-    #     "title": "午夜钟声⏳｜关于二搭🍉（四编"
-    # },
-    # {
-    #     "topic_id": "333639193",
-    #     "start": 0,
-    #     "end": 3,
-    #     "title": "破除朝雪录之前arp线下不到200人的洗脑包"  #兰迪黑帖
-    # },
-    # {
-    #     "topic_id": "334216331",
-    #     "start": 0,
-    #     "end": 3,
-    #     "title": "才发现李兰迪有两部cvb破1的一番剧，一部cvb破1的女主剧"
-    # },
-    # {
-    #     "topic_id": "333696018",
-    #     "start": 0,
-    #     "end": 4,
-    #     "title": "其实剧播前… "  #兰迪黑帖
-    # },
-    # {
-    #     "topic_id": "333758638",
-    #     "start": 0,
-    #     "end": 9,
-    #     "title": "八月闲聊楼2.0 "  #敖后花园
-    # }
-    # {
-    #     "topic_id": "334970297",
-    #     "start": 0,
-    #     "end": 1,
-    #     "title": "午夜钟声⏳｜投票 豚哈何时开始谈的 "
-    # },
-    # {
-    #     "topic_id": "335537081",
-    #     "start": 0,
-    #     "end": 3,
-    #     "title": "之前我repo过💧的直播，团队深夜很快就⛰️了，再发一次"
-    # },
-    # {
-    #     "topic_id": "335530018",
-    #     "start": 0,
-    #     "end": 6,
-    #     "title": "算官方辟谣吗？那不是瓜主给💧炒🫓实锤了。。"
-    # },
-    # {
-    #     "topic_id": "335556249",
-    #     "start": 0,
-    #     "end": 2,
-    #     "title": "💧这个事的前因是什么？"
-    # },
-    # {
-    #     "topic_id": "335543754",
-    #     "start": 0,
-    #     "end": 1,
-    #     "title": "组里打的，感觉💧很有流量的苗子了呀 "
-    # },
-    # {
-    #     "topic_id": "335555904",
-    #     "start": 0,
-    #     "end": 1,
-    #     "title": "谁还记得"
-    # },
-    # {
-    #     "topic_id": "335535985",
-    #     "start": 0,
-    #     "end": 6,
-    #     "title": "看过亲爱的客栈真的很难好感💧"
-    # },
-    # {
-    #     "topic_id": "335531020",
-    #     "start": 0,
-    #     "end": 2,
-    #     "title": "💧最近已经被敖丁刘檀四家辟谣了…… "
-    # },
-    # {
-    #     "topic_id": "336215378",
-    #     "start": 0,
-    #     "end": 1,
-    #     "title": "午夜钟声⏳｜九月公主🧚‍♀️茶话会1.0 "
-    # },
-    # {
-    #     "topic_id": "328818302",
-    #     "start": 0,
-    #     "end": 1,
-    #     "title": "🌊毛为什么要骂朝雪录"
-    # }
-    # {
-    #     "topic_id": "321957009",
-    #     "start": 0,
-    #     "end": 2,
-    #     "title": "流水迢迢jrjj问心无愧"
-    # }
-    # {
-    #     "topic_id": "328673166",
-    #     "start": 0,
-    #     "end": 3,
-    #     "title": "我是怎么对白鹿粉转厌恶的？"
-    # }
-    # {
-    #     "topic_id": "340440212",
-    #     "start": 0,
-    #     "end": 4,
-    #     "title": "菌菌维稳了，男频需要发酵，留存率特别高，大家别急 "
-    # }
-]
-
 INSERT_SQL = """
-    INSERT INTO douban_post (
-        topic_id, user_id, user_name, pubtime, ip, comment_text, like_count
+    INSERT INTO public.douban_topic_post_raw (
+        topic_id, topic_title, topic_url,
+        post_type, floor_no,
+        user_id, user_name, is_op_author,
+        content_text, like_count,
+        pubtime, ip_location,
+        crawled_at, crawler_version
     )
-    VALUES (%s, %s, %s, %s, %s, %s, %s)
-    ON CONFLICT (topic_id, user_id, pubtime) DO NOTHING
-    """
+    VALUES (%s, %s, %s,
+            %s, %s,
+            %s, %s, %s,
+            %s, %s,
+            %s, %s,
+            now(), %s)
+    ON CONFLICT (topic_id, post_type, floor_no) DO UPDATE SET
+        topic_title   = EXCLUDED.topic_title,
+        topic_url     = EXCLUDED.topic_url,
+        user_id       = EXCLUDED.user_id,
+        user_name     = EXCLUDED.user_name,
+        is_op_author  = EXCLUDED.is_op_author,
+        content_text  = EXCLUDED.content_text,
+        like_count    = EXCLUDED.like_count,
+        pubtime       = EXCLUDED.pubtime,
+        ip_location   = EXCLUDED.ip_location,
+        crawler_version = EXCLUDED.crawler_version
+"""
+
+def parse_max_page(block: BeautifulSoup) -> int:
+    pager = block.select_one("div.paginator")
+    if not pager:
+        return 1  # no pagination, only 1 page
+
+    pages = []
+    for a in pager.select("a"):
+        txt = a.get_text(strip=True)
+        if txt.isdigit():
+            pages.append(int(txt))
+
+    return max(pages) if pages else 1
+
+def parse_op(block: BeautifulSoup) -> dict:
+    # topic_title
+    h1 = block.select_one("div.article h1")
+    topic_title = ""
+    if h1:
+        topic_title = h1.get_text(" ", strip=True).replace('"', "").replace("“", "").replace("”", "").strip()
+
+    # Topic URL (can be uploaded from outside)
+    # OP author (multiple selectors as backup)
+    op_user_tag = (
+        block.select_one('#topic-content .user-face a') or
+        block.select_one('#topic-content .topic-doc h3 a') or
+        block.select_one('div.topic-doc h3 a')
+    )
+    op_user_id = extract_href_info(r'/people/([^/]+)/', op_user_tag) if op_user_tag else ""
+    op_user_name = op_user_tag.get_text(strip=True) if op_user_tag else ""
+
+    # OP content
+    main_container = block.select_one("#link-report .topic-content .rich-content") or block.select_one("#link-report .topic-content")
+    op_text = ""
+    if main_container:
+        ps = main_container.find_all("p")
+        op_text = "\n".join(p.get_text(" ", strip=True) for p in ps if p.get_text(strip=True)).strip()
+
+    return {
+        "topic_title": topic_title,
+        "op_user_id": op_user_id,
+        "op_user_name": op_user_name,
+        "op_text": op_text,
+    }
 
 
-
-def parse_row(li):
+def parse_reply_row(li, floor_no: int, op_user_id: str):
     result = {}
 
     user_tag = li.find("h4").find("a") if li.find("h4") else None
-    result['user_id'] = extract_href_info(r'/people/([^/]+)/', user_tag)
-    result['user_name'] = user_tag.get_text(strip=True) if user_tag else ""
+    result["user_id"] = extract_href_info(r'/people/([^/]+)/', user_tag)
+    result["user_name"] = user_tag.get_text(strip=True) if user_tag else ""
 
     pubtime_tag = li.find("span", class_="pubtime")
-
     pubtime_text = pubtime_tag.get_text(strip=True) if pubtime_tag else ""
     if pubtime_text:
         parts = pubtime_text.split()
-        result['pubtime'] = " ".join(parts[:2])
-        result['ip'] = parts[2] if len(parts) > 2 else ""
+        result["pubtime"] = " ".join(parts[:2])
+        result["ip_location"] = parts[2] if len(parts) > 2 else ""
     else:
-        result['pubtime'], result['ip'] = "", ""
+        result["pubtime"], result["ip_location"] = None, ""
 
     reply_content = li.find("div", class_="reply-content")
-    result['comment_text'] = " ".join(p.get_text(strip=True) for p in reply_content.find_all("p")) if reply_content else ""
+    result["content_text"] = " ".join(p.get_text(strip=True) for p in reply_content.find_all("p")) if reply_content else ""
 
-    like_count = extract_count(li, r'(\d+)', 'a[class*="comment-vote"]')
-    result['like_count'] = like_count if like_count is not None else 0
+    like_count = extract_count(li, r"(\d+)", 'a[class*="comment-vote"]')
+    result["like_count"] = like_count if like_count is not None else 0
+
+    result["floor_no"] = floor_no
+    result["is_op_author"] = bool(result["user_id"]) and (result["user_id"] == op_user_id)
 
     return result
 
 
-def fetch_topic_page(post_id, page_num=0, headers=None):
-    url = BASE_URL_PAGE.format(post_id, page_num * 100)
+def fetch_topic_page(topic_id, start_offset=0, headers=None):
+    url = BASE_URL_PAGE.format(topic_id, start_offset)
 
     try:
         resp = requests.get(url, headers=headers, timeout=10)
         if resp.status_code != 200:
             logging.error("Failed: %s", resp.status_code)
-            return []
+            return [], None, None
 
         block = BeautifulSoup(resp.text, "html.parser")
         rows = block.find_all("li", class_="comment-item")
 
-        return [parse_row(r) for r in rows]
+        max_page = parse_max_page(block)
+        if start_offset == 0:
+            max_page = parse_max_page(block)
 
-    except (requests.exceptions.RequestException, psycopg2.Error) as e:
+        return rows, block, max_page, url
+
+    except requests.exceptions.RequestException as e:
         logging.error("Error: %s", e)
-        return []
+        return [], None, None, url
 
 
 
-def insert_single_topic(cursor, post_dict, post_meta):
 
-    try:
-        params = (
-            post_meta['topic_id'],
-            post_dict['user_id'],
-            post_dict['user_name'],
-            post_dict['pubtime'],
-            post_dict['ip'],
-            post_dict['comment_text'],
-            post_dict['like_count']
-        )
-        cursor.execute(INSERT_SQL, params)
-        return cursor.rowcount == 1
-    except (ValueError, TypeError, psycopg2.Error) as e:
-        logging.error("❌ Insert failed: %s", e)
-        logging.info("🔧 Wrong data: %s", post_dict)
-        return False
+CRAWLER_VERSION = "topic_post_raw_v1"
 
+def insert_op(cursor, topic_id: int, topic_title: str, topic_url: str, op_user_id: str, op_user_name: str, op_text: str):
+    params = (
+        topic_id, topic_title, topic_url,
+        "op", 0,
+        op_user_id, op_user_name, True,
+        op_text, None,
+        None, None,
+        CRAWLER_VERSION
+    )
+    cursor.execute(INSERT_SQL, params)
+
+def insert_reply(cursor, topic_id: int, topic_title: str, topic_url: str, reply: dict):
+    params = (
+        topic_id, topic_title, topic_url,
+        "reply", reply["floor_no"],
+        reply["user_id"], reply["user_name"], reply["is_op_author"],
+        reply["content_text"], reply["like_count"],
+        reply["pubtime"], reply["ip_location"],
+        CRAWLER_VERSION
+    )
+    cursor.execute(INSERT_SQL, params)
 
 def main_loop(post):
     conn = get_db_conn()
-    request_headers = get_headers()
+    headers = get_headers()
 
-    for page in range(post['start'], post['end']):  # Adjust range as needed
-        try:
-            logging.info("\n📄 Fetching comments on page %s...", page)
-            topics = fetch_topic_page(post['topic_id'], page, headers=request_headers)
-            logging.info("📄 Fetched %d comments on page %d", len(topics), page)
-            if not topics:
-                logging.warning("⚠️ No more comments, may be limited or reached the end")
-                break
+    topic_id = post["topic_id"]
+    STEP = 100
+
+    topic_title = ""
+    topic_url = ""
+    op_user_id = ""
+
+    try:
+        # 1) Fetch the first page: get rows0 + block0 + max_page
+        rows0, block0, max_page, url0 = fetch_topic_page(topic_id, start_offset=0, headers=headers)
+        topic_url = url0
+
+        if not block0:
+            logging.error("❌ Failed to load first page HTML. topic_id=%s", topic_id)
+            return
+
+        # 2) Parse the OP and perform upsert (only once).
+        op_meta = parse_op(block0)
+        if op_meta:
+            topic_title = op_meta.get("topic_title", "")
+            op_user_id = op_meta.get("op_user_id", "")
 
             with conn.cursor() as cursor:
-                for c in topics:
-                    success = insert_single_topic(cursor, c, post)
-                    if success:
-                        logging.info("✅ Insert user_name=%s", c['user_name'])
-                    else:
-                        logging.warning("⚠️ Failed to insert user_name=%s",c['user_name'])
-
+                insert_op(
+                    cursor,
+                    topic_id=topic_id,
+                    topic_title=topic_title,
+                    topic_url=topic_url,
+                    op_user_id=op_user_id,
+                    op_user_name=op_meta.get("op_user_name", ""),
+                    op_text=op_meta.get("op_text", ""),
+                )
                 conn.commit()
 
-                safe_sleep(20, 30)     # Sleep between requests
+            logging.info("🧾 OP upserted. title=%s", topic_title)
+        else:
+            logging.warning("⚠️ OP meta not parsed. topic_id=%s", topic_id)
 
-        except (requests.exceptions.RequestException, psycopg2.Error) as e:
-            conn.rollback()
-            logging.error("❌ Page crawl failed: %s, rollback", e)
-            safe_sleep(10, 20)  # Sleep before retrying
+        # 3) Calculate the maximum start_offset
+        #    Without a paging mechanism, max_page could be 1 or None.
+        if not max_page:
+            max_page = 1
 
-    conn.close()
+        max_start = (max_page - 1) * STEP
+        logging.info("📌 topic_id=%s max_page=%s => max_start=%s", topic_id, max_page, max_start)
+
+        # 4) Loop through all page replies
+        for start_offset in range(0, max_start + STEP, STEP):
+            try:
+                logging.info("📄 Fetching replies topic_id=%s start=%s", topic_id, start_offset)
+
+                if start_offset == 0:
+                    rows = rows0
+                    url = url0
+                else:
+                    rows, _block, _max_page_unused, url = fetch_topic_page(
+                        topic_id, start_offset=start_offset, headers=headers
+                    )
+
+                topic_url = url
+                logging.info("📄 start=%s got %d replies", start_offset, len(rows))
+
+                # If rows are not found on a certain page: This doesn't necessarily mean a break is needed (it can happen occasionally), skip it for now.
+                if not rows:
+                    logging.warning("⚠️ start=%s returned 0 rows; skip", start_offset)
+                    continue
+
+                with conn.cursor() as cursor:
+                    for idx, li in enumerate(rows):
+                        floor_no = start_offset + idx + 1  # 1..N continuous floor number across pages
+                        reply = parse_reply_row(li, floor_no=floor_no, op_user_id=op_user_id)
+                        insert_reply(cursor, topic_id, topic_title, topic_url, reply)
+
+                    conn.commit()
+
+                safe_sleep(20, 30)
+
+            except (psycopg2.Error, Exception) as e:
+                conn.rollback()
+                logging.error("❌ Page failed: %s (start=%s)", e, start_offset)
+                safe_sleep(10, 20)
+
+    finally:
+        conn.close()
 
 
 if __name__ == "__main__":
-    for post in post_list:
-        logging.info("🚀 Starting Douban topics scraper for %s", post['title'])
+    for post in POST_LIST:
+        logging.info("🚀 Starting Douban topics scraper")
         main_loop(post)  # Adjust start_page and max_pages as needed
     logging.shutdown()
 
