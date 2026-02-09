@@ -318,7 +318,67 @@ ON public.douban_topic_post_raw(user_id);
 
 
 
+-- AI analysis table, can be analized many times
+--DROP TABLE douban_topic_post_ai;
+CREATE TABLE public.douban_topic_post_ai (
+  -- Natural key of the original post (one comment)
+  user_id         varchar(20),
+  topic_id        bigint  NOT NULL,
+  post_type       text    NOT NULL,
+  floor_no        integer NOT NULL,
 
+  -- Core AI classification results (frequently queried fields)
+  ai_label        text    NOT NULL,                 
+  -- Classification label: 'hater', 'fan', or 'neutral'
+
+  ai_confidence   numeric(4,3),
+  -- Model confidence score in range [0, 1]
+
+  ai_sentiment    text,                             
+  -- Overall sentiment: 'positive', 'neutral', 'negative'
+
+  ai_is_sarcasm   boolean,
+  -- Whether the comment contains sarcasm or ironic tone
+
+  ai_reason       text,                             
+  -- Short natural-language explanation of the classification
+
+  -- Full raw AI output for extensibility and auditing
+  ai_result       jsonb   NOT NULL,
+
+  -- Model and prompt versioning
+  ai_model        text    NOT NULL,                 
+  -- LLM identifier, e.g. 'qwen3:4b'
+
+  prompt_version  text    NOT NULL,                 
+  -- Prompt version used for this analysis, e.g. 'v1_qwen3_4b_json'
+
+  -- Timestamp when the comment was labeled by the model
+  labeled_at      timestamptz NOT NULL DEFAULT now(),
+
+  -- Composite primary key:
+  -- allows the same comment to be analyzed multiple times
+  -- using different models or prompt versions
+  PRIMARY KEY (topic_id, post_type, floor_no, prompt_version),
+
+  -- Foreign key to the raw post table
+  CONSTRAINT fk_ai_post_raw
+    FOREIGN KEY (topic_id, post_type, floor_no)
+    REFERENCES public.douban_topic_post_raw(topic_id, post_type, floor_no)
+    ON DELETE CASCADE,
+
+  -- Data quality constraints
+  CONSTRAINT chk_ai_label
+    CHECK (ai_label IN ('hater','fan','neutral')),
+
+  CONSTRAINT chk_ai_sentiment
+    CHECK (
+      ai_sentiment IS NULL
+      OR ai_sentiment IN ('positive','neutral','negative')
+    )
+);
+CREATE INDEX IF NOT EXISTS ix_post_ai_user
+ON public.douban_topic_post_ai (user_id);
 
 
 
