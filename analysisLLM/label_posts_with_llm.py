@@ -1,58 +1,193 @@
 import json
+import logging
 import os
+import random
+import re
 import time
-from typing import Any, Dict, Optional, Tuple, List
+from pathlib import Path
+from typing import Any, Dict, List, Tuple
 
 import requests
-from db import get_db_conn
+from requests.exceptions import ConnectionError, ReadTimeout
 
+from db import get_db_conn
+from utils.logger import setup_logger
+
+LOG_PATH = Path(__file__).resolve().parent.parent / "logs" / "label_posts_with_llm.log"
+setup_logger(log_file=str(LOG_PATH))
 
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
 MODEL = os.getenv("OLLAMA_MODEL", "qwen3:4b")
-PROMPT_VERSION = os.getenv("PROMPT_VERSION", "v1_qwen3_4b_json")
+PROMPT_VERSION = os.getenv("PROMPT_VERSION", "v1_qwen3_4b_json").strip()
 BATCH_SIZE = int(os.getenv("BATCH_SIZE", "50"))
 
 
 PROMPT_TEMPLATE = """
-You are a Chinese entertainment opinion analysis assistant.
+You are a Chinese entertainment opinion classifier.
 
-Return STRICT JSON ONLY. Any non-JSON output is forbidden.
+IMPORTANT RULES:
+- Output ONE line of JSON only.
+- Do NOT explain.
+- Do NOT think aloud.
+- Do NOT include analysis, markdown, or extra text.
 
-Schema:
-{{
-  "label": "hater | fan | neutral",
-  "confidence": number between 0 and 1,
-  "sentiment": "positive | neutral | negative",
-  "is_sarcasm": true | false,
-  "reason": "short explanation in Chinese"
-}}
+JSON schema:
+{
+  "label":"hater|fan|neutral",
+  "final_attitude_to_landy":"support|attack|neutral",
+  "ai_is_rebuttal": true|false,
+  "ai_mention_negative_claim": true|false,
+  "confidence":0.00,
+  "sentiment":"positive|neutral|negative",
+  "is_sarcasm":false,
+  "reason":"一句话解释（<=20字）"
+}
 
 Comment:
-{comment}
+<<COMMENT>>
 """.strip()
 
 
+LABEL_MAP = {"hater": "hater", "fan": "fan", "neutral": "neutral"}
+ZH_MAP = {"黑子": "hater", "粉丝": "fan", "路人": "neutral"}
+
+POST_SQL = """
+SELECT
+  r.user_id,
+  r.topic_id,
+  r.post_type,
+  r.floor_no,
+  r.content_text AS content
+FROM public.douban_topic_post_raw r
+WHERE r.content_text IS NOT NULL
+  AND length(btrim(r.content_text)) > 0
+  AND NOT EXISTS (
+    SELECT 1
+    FROM public.douban_topic_post_ai a
+    WHERE a.topic_id = r.topic_id
+      AND a.post_type = r.post_type
+      AND a.floor_no  = r.floor_no
+      AND btrim(a.prompt_version) = btrim(%(prompt_version)s)
+  )
+ORDER BY r.topic_id, r.post_type, r.floor_no
+LIMIT %(batch_size)s;
+"""
+
+INSERT_SQL = """
+INSERT INTO public.douban_topic_post_ai (
+  user_id,
+  topic_id,
+  post_type,
+  floor_no,
+  ai_label,
+  ai_confidence,
+  ai_sentiment,
+  ai_is_sarcasm,
+  ai_reason,
+  ai_result,
+  ai_model,
+  prompt_version,
+  labeled_at,
+  final_attitude_to_landy,
+  ai_is_rebuttal,
+  ai_mention_negative_claim
+)
+VALUES (
+  %(user_id)s,
+  %(topic_id)s,
+  %(post_type)s,
+  %(floor_no)s,
+  %(ai_label)s,
+  %(ai_confidence)s,
+  %(ai_sentiment)s,
+  %(ai_is_sarcasm)s,
+  %(ai_reason)s,
+  %(ai_result)s::jsonb,
+  %(ai_model)s,
+  %(prompt_version)s,
+  now(),
+  %(final_attitude_to_landy)s,
+  %(ai_is_rebuttal)s,
+  %(ai_mention_negative_claim)s
+)
+ON CONFLICT (topic_id, post_type, floor_no, prompt_version)
+DO NOTHING;
+"""
+
+
 def build_prompt(comment: str) -> str:
-    return PROMPT_TEMPLATE.format(comment=comment.strip())
+    return PROMPT_TEMPLATE.replace("<<COMMENT>>", comment.strip())
 
 
 def call_ollama(prompt: str) -> str:
-    """
-    Calls Ollama /api/generate with stream=false.
-    Returns the 'response' text (should be JSON if prompt is followed).
-    """
     payload = {
         "model": MODEL,
         "prompt": prompt,
         "stream": False,
+        "format": "json",     # JSON only, no extra text
         "options": {
-            "temperature": 0.2,
+            "temperature": 0.0,
+            "num_predict": 256,
+            "num_ctx": 4096,
+            "think": False,     # key：close thinking
         },
     }
+
     r = requests.post(OLLAMA_URL, json=payload, timeout=120)
     r.raise_for_status()
     data = r.json()
-    return data.get("response", "").strip()
+    resp = (data.get("response") or "").strip()
+
+    # if response is empty, try to read from reasoning / thinking fields (some versions of ollama may put output there when "think" is enabled)
+    if not resp:
+        for key in ("thinking", "reasoning", "reasoning_content"):
+            val = data.get(key)
+            if isinstance(val, str) and val.strip().startswith("{"):
+                resp = val.strip()
+                logging.debug("using %s field as response", key)
+                break
+
+    logging.debug("🧾 resp_head=%r", resp[:200])
+
+    if not resp:
+        raise ValueError(
+            f"ollama response empty. done_reason={data.get('done_reason')} keys={list(data.keys())}"
+        )
+
+    if not resp.lstrip().startswith("{"):
+        raise ValueError(f"ollama non-JSON response head={resp[:200]!r}")
+
+    return resp
+
+
+
+def call_ollama_with_retry(prompt: str, max_retries: int = 3) -> str:
+    last_err = None
+
+    for attempt in range(1, max_retries + 1):
+        try:
+            return call_ollama(prompt)
+
+        # network error → retry
+        except (ReadTimeout, ConnectionError) as e:
+            last_err = e
+            sleep_s = min(2 ** attempt, 8) + random.random()
+            logging.warning(
+                "Ollama network error, retry %s/%s after %.1fs: %r",
+                attempt, max_retries, sleep_s, e
+            )
+            time.sleep(sleep_s)
+
+        # empty response / abnormal JSON → retry once
+        except ValueError as e:
+            last_err = e
+            logging.warning(
+                "Ollama invalid response, retry %s/%s: %r",
+                attempt, max_retries, e
+            )
+            time.sleep(0.5)
+
+    raise last_err
 
 
 def extract_json(text: str) -> Dict[str, Any]:
@@ -60,14 +195,26 @@ def extract_json(text: str) -> Dict[str, Any]:
     Strict parse first. If model accidentally adds extra text,
     try to locate the first {...} block.
     """
+    if text is None:
+        raise ValueError("ollama response is None")
+    raw = text.strip()
+    if not raw:
+        raise ValueError("ollama response is empty")
+    # extract only first JSON block
+    m = re.search(r"```json\s*(\{.*?\})\s*```", raw, flags=re.S)
+    if m:
+        return json.loads(m.group(1))
+    # then try strict parse
     try:
-        return json.loads(text)
+        return json.loads(raw)
     except json.JSONDecodeError:
         # fallback: try to slice JSON object
-        start = text.find("{")
-        end = text.rfind("}")
+        start = raw.find("{")
+        end = raw.rfind("}")
         if start != -1 and end != -1 and end > start:
-            return json.loads(text[start : end + 1])
+            candidate = raw[start:end + 1]
+            return json.loads(candidate)
+
         raise
 
 
@@ -76,12 +223,12 @@ def normalize_result(obj: Dict[str, Any]) -> Dict[str, Any]:
     Normalize fields and enforce allowed values.
     """
     label = str(obj.get("label", "")).strip().lower()
-    label_map = {"hater": "hater", "fan": "fan", "neutral": "neutral"}
-    if label not in label_map:
+
+    if label not in LABEL_MAP:
         # sometimes model outputs Chinese label; map if needed
-        zh_map = {"黑子": "hater", "粉丝": "fan", "路人": "neutral"}
-        label = zh_map.get(label, label)
-    if label not in label_map:
+
+        label = ZH_MAP.get(label, label)
+    if label not in LABEL_MAP:
         raise ValueError(f"Invalid label: {label}")
 
     sentiment = obj.get("sentiment")
@@ -129,64 +276,37 @@ def fetch_batch(conn) -> List[Tuple[int, str, int, str]]:
     Returns rows: (user_id,topic_id, post_type, floor_no, content)
     IMPORTANT: change r.post_content_col to your real column name.
     """
-    sql = """
-    SELECT
-        r.user_id,
-        r.topic_id,
-        r.post_type,
-        r.floor_no,
-        r.content_text AS content
-    FROM public.douban_topic_post_raw r
-    LEFT JOIN public.douban_topic_post_ai a
-        ON a.topic_id = r.topic_id
-        AND a.post_type = r.post_type
-        AND a.floor_no = r.floor_no
-        AND a.prompt_version = %(prompt_version)s
-    WHERE a.topic_id IS NULL
-        AND r.content_text IS NOT NULL
-        AND length(trim(r.content_text)) > 0
-    ORDER BY r.topic_id, r.post_type, r.floor_no
-    LIMIT %(batch_size)s;
-    """
     with conn.cursor() as cur:
-        cur.execute(sql, {"prompt_version": PROMPT_VERSION, "batch_size": BATCH_SIZE})
+        cur.execute(POST_SQL, {"prompt_version": PROMPT_VERSION, "batch_size": BATCH_SIZE})
         return cur.fetchall()
 
 
-def upsert_ai(conn, row_key: Tuple[int, str, int], result: Dict[str, Any]) -> None:
-    user_id,topic_id, post_type, floor_no = row_key
+def upsert_ai(
+    conn,
+    row_key: Tuple[int, str, int],
+    user_id: str,
+    result: Dict[str, Any],
+) -> None:
+    topic_id, post_type, floor_no = row_key
 
-    ai_label = result.get("label")
-    ai_confidence = result.get("confidence")
-    ai_sentiment = result.get("sentiment")
-    ai_is_sarcasm = result.get("is_sarcasm")
-    ai_reason = result.get("reason")
+    # ---- old fields ----
+    ai_label = result.get("label", "ERROR")
+    ai_confidence = result.get("confidence", 0.0)
+    ai_sentiment = result.get("sentiment", "neutral")
+    ai_is_sarcasm = result.get("is_sarcasm", False)
+    ai_reason = result.get("reason", "")
 
-    sql = """
-    INSERT INTO public.douban_topic_post_ai (
-      user_id, topic_id, post_type, floor_no,
-      ai_label, ai_confidence, ai_sentiment, ai_is_sarcasm, ai_reason,
-      ai_result, ai_model, prompt_version, labeled_at
+    # ---- new fields ----
+    final_attitude_to_landy = result.get(
+        "final_attitude_to_landy",
+        {"fan": "support", "hater": "attack"}.get(ai_label, "neutral")
     )
-    VALUES (
-      %(user_id)s, %(topic_id)s, %(post_type)s, %(floor_no)s,
-      %(ai_label)s, %(ai_confidence)s, %(ai_sentiment)s, %(ai_is_sarcasm)s, %(ai_reason)s,
-      %(ai_result)s::jsonb, %(ai_model)s, %(prompt_version)s, now()
-    )
-    ON CONFLICT (topic_id, post_type, floor_no, prompt_version)
-    DO UPDATE SET
-      ai_label = EXCLUDED.ai_label,
-      ai_confidence = EXCLUDED.ai_confidence,
-      ai_sentiment = EXCLUDED.ai_sentiment,
-      ai_is_sarcasm = EXCLUDED.ai_is_sarcasm,
-      ai_reason = EXCLUDED.ai_reason,
-      ai_result = EXCLUDED.ai_result,
-      ai_model = EXCLUDED.ai_model,
-      labeled_at = EXCLUDED.labeled_at;
-    """
+    ai_is_rebuttal = result.get("ai_is_rebuttal")
+    ai_mention_negative_claim = result.get("ai_mention_negative_claim")
+
     with conn.cursor() as cur:
         cur.execute(
-            sql,
+            INSERT_SQL,
             {
                 "user_id": user_id,
                 "topic_id": topic_id,
@@ -200,8 +320,23 @@ def upsert_ai(conn, row_key: Tuple[int, str, int], result: Dict[str, Any]) -> No
                 "ai_result": json.dumps(result, ensure_ascii=False),
                 "ai_model": MODEL,
                 "prompt_version": PROMPT_VERSION,
+                "final_attitude_to_landy": final_attitude_to_landy,
+                "ai_is_rebuttal": ai_is_rebuttal,
+                "ai_mention_negative_claim": ai_mention_negative_claim,
             },
         )
+
+
+def build_error_obj(error_code: str, exception: Exception, raw_text: str) -> Dict[str, Any]:
+    return {
+        "label": "neutral",
+        "confidence": 0.0,
+        "sentiment": "neutral",
+        "is_sarcasm": False,
+        "reason": f"{error_code}: {type(exception).__name__}",
+        "raw_head": (raw_text or "")[:500],
+    }
+
 
 
 def main():
@@ -209,30 +344,125 @@ def main():
     conn.autocommit = False
     try:
         rows = fetch_batch(conn)
+        logging.info("🚀 Start labeling batch of %s rows", len(rows))
         ok, fail = 0, 0
+
         for user_id, topic_id, post_type, floor_no, content in rows:
-            key = (user_id, topic_id, post_type, floor_no)
+            key = (topic_id, post_type, floor_no)
+            resp_text = None   # prevent UnboundLocalError in except
+            text = (content or "").strip()
+
+            # ---- Short circuit: Empty / Blank only ----
+            if not text:
+                logging.warning(
+                    "Skip empty content: topic_id=%s post_type=%s floor_no=%s",
+                    topic_id, post_type, floor_no
+                )
+
+                # Simply write a neutral statement (without calling LLM).
+                upsert_ai(
+                    conn,
+                    key,
+                    user_id,
+                    result={
+                        "label": "neutral",
+                        "final_attitude_to_landy": "neutral",
+                        "confidence": 0.0,
+                        "sentiment": "neutral",
+                        "is_sarcasm": False,
+                        "ai_is_rebuttal": False,
+                        "ai_mention_negative_claim": False,
+                        "reason": "empty_content"
+                    }
+                )
+                continue
+
             try:
                 prompt = build_prompt(content)
-                resp_text = call_ollama(prompt)
-                obj = extract_json(resp_text)
-                obj = normalize_result(obj)
+                logging.info(
+                    "Calling ollama: topic_id=%s %s-%s",
+                    topic_id, post_type, floor_no
+                )
+                resp_text = call_ollama_with_retry(prompt, max_retries=3)
+                logging.debug("Raw LLM output: %s", resp_text)
 
-                upsert_ai(conn, key, obj)
-                conn.commit()
-                ok += 1
+                # --- handle parse/normalize errors ---
+                try:
+                    obj = extract_json(resp_text)
+                    obj = normalize_result(obj)
+                except Exception as e:
+                    conn.rollback()
+                    fail += 1
+                    logging.error(
+                        "JSON parse/normalize failed: user_id=%s topic_id=%s %s-%s error=%s raw_head=%r",
+                        user_id, topic_id, post_type, floor_no, repr(e), (resp_text or "")[:200]
+                    )
+                    logging.debug("Raw LLM output: %s", resp_text)
+
+                    # ✅ Key point: Construct ERROR results, write them as placeholders to avoid repeated analysis in the future.
+                    obj = build_error_obj(
+                        error_code="ollama_empty_response" if not (resp_text and resp_text.strip()) else "json_parse_failed",
+                        exception=e,
+                        raw_text=resp_text
+                    )
+
+                # --- handle DB errors ---
+                try:
+                    upsert_ai(conn, key, user_id, obj)
+                    conn.commit()
+                    ok += 1
+                except Exception as e:
+                    conn.rollback()
+                    fail += 1
+                    logging.error(
+                        "DB upsert failed: user_id=%s topic_id=%s %s-%s error=%s",
+                        user_id, topic_id, post_type, floor_no, repr(e)
+                    )
+                    # helpful to debug constraint issues:
+                    logging.debug("Normalized obj: %s", obj)
+                    time.sleep(0.3)
+                    continue  # go next row
+
 
             except Exception as e:
                 conn.rollback()
                 fail += 1
-                # keep it simple: print error + key
-                print(f"[FAIL] {key} error={e}")
-                # small backoff to avoid hammering if something goes wrong
-                time.sleep(0.3)
+                logging.error(
+                    "LLM call/build prompt failed: user_id=%s topic_id=%s %s-%s error=%s",
+                    user_id, topic_id, post_type, floor_no, repr(e)
+                )
+                logging.debug("Last resp_text: %s", resp_text)
 
-        print(f"Done. ok={ok}, fail={fail}, model={MODEL}, prompt_version={PROMPT_VERSION}")
+                # ✅ Write a placeholder to prevent the same record from being captured and failing repeatedly in the next round.
+                try:
+                    obj = build_error_obj(
+                        error_code="llm_call_failed",
+                        exception=e,
+                        raw_text=resp_text or ""
+                    )
+                    obj["final_attitude_to_landy"] = "neutral"
+                    obj["ai_is_rebuttal"] = False
+                    obj["ai_mention_negative_claim"] = False
+
+                    upsert_ai(conn, key, user_id, obj)
+                    conn.commit()
+                except Exception as db_e:
+                    conn.rollback()
+                    logging.error(
+                        "DB upsert failed (after LLM failure): user_id=%s topic_id=%s %s-%s error=%s",
+                        user_id, topic_id, post_type, floor_no, repr(db_e)
+                    )
+
+                time.sleep(0.3)
+                continue
+
+        logging.info("✅ Done. ok=%s fail=%s", ok, fail)
+
+    except KeyboardInterrupt:
+        logging.warning("Interrupted by user. Already committed ok=%s fail=%s", ok, fail)
     finally:
         conn.close()
 
 if __name__ == "__main__":
     main()
+    logging.shutdown()

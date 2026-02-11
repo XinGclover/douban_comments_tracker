@@ -101,12 +101,12 @@ VIEW_WHITELIST = [
 ]
 
 POST_LIST = [
-    {
-        "topic_id": "475514385"
-    }
     # {
-    #     "topic_id": "475433717"
+    #     "topic_id": "475514385"
     # }
+    {
+        "topic_id": "475249400"
+    }
     # {
     #     "topic_id": "341265141",
     #     "start": 0,
