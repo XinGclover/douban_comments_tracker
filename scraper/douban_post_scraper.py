@@ -10,7 +10,6 @@ from utils.config_loader import get_headers
 from utils.logger import setup_logger
 from pathlib import Path
 from utils.html_tools import extract_href_info, extract_count
-from utils.config import POST_LIST
 
 
 LOG_PATH = Path(__file__).resolve().parent.parent / "logs" / "douban_post_scraper.log"
@@ -18,6 +17,25 @@ setup_logger(log_file=str(LOG_PATH))
 
 
 BASE_URL_PAGE = "https://www.douban.com/group/topic/{}/?start={}"
+
+GROUP_PREFIX = "zhaoxuelu"
+TABLE_TOPICS = f"{GROUP_PREFIX}_group_topics"
+
+SINCE_TIMESTAMP = "2026-01-01 12:00:00+01"  # Sweden winter time
+
+TITLE_KEYWORD = "%兰迪%"
+LIMIT_TOPICS = 10
+
+SQL_GET_TOPICS = f"""
+    SELECT topic_id
+    FROM {TABLE_TOPICS}
+    WHERE
+        full_time >= %s::timestamptz
+        AND title LIKE %s
+        AND crawled_at IS NULL
+    ORDER BY full_time ASC
+    LIMIT %s;
+"""
 
 
 INSERT_SQL = """
@@ -46,6 +64,12 @@ INSERT_SQL = """
         pubtime       = EXCLUDED.pubtime,
         ip_location   = EXCLUDED.ip_location,
         crawler_version = EXCLUDED.crawler_version
+"""
+
+SQL_MARK_CRAWLED = f"""
+    UPDATE {TABLE_TOPICS}
+    SET crawled_at = NOW()
+    WHERE topic_id = %s;
 """
 
 def parse_max_page(block: BeautifulSoup) -> int:
@@ -120,6 +144,12 @@ def parse_reply_row(li, floor_no: int, op_user_id: str):
 
     return result
 
+def get_topic_list(conn):
+    with conn.cursor() as cur:
+        cur.execute(SQL_GET_TOPICS, (SINCE_TIMESTAMP, TITLE_KEYWORD, LIMIT_TOPICS))
+        rows = cur.fetchall()
+    return [row[0] for row in rows]
+
 
 def fetch_topic_page(topic_id, start_offset=0, headers=None):
     url = BASE_URL_PAGE.format(topic_id, start_offset)
@@ -170,11 +200,10 @@ def insert_reply(cursor, topic_id: int, topic_title: str, topic_url: str, reply:
     )
     cursor.execute(INSERT_SQL, params)
 
-def main_loop(post):
+def main_loop(topic_id: int):
     conn = get_db_conn()
     headers = get_headers()
 
-    topic_id = post["topic_id"]
     STEP = 100
 
     topic_title = ""
@@ -220,49 +249,74 @@ def main_loop(post):
         max_start = (max_page - 1) * STEP
         logging.info("📌 topic_id=%s max_page=%s => max_start=%s", topic_id, max_page, max_start)
 
+        topic_success = True
         # 4) Loop through all page replies
-        for start_offset in range(0, max_start + STEP, STEP):
-            try:
-                logging.info("📄 Fetching replies topic_id=%s start=%s", topic_id, start_offset)
+        try:
+            for start_offset in range(0, max_start + STEP, STEP):
+                try:
+                    logging.info("📄 Fetching replies topic_id=%s start=%s", topic_id, start_offset)
 
-                if start_offset == 0:
-                    rows = rows0
-                    url = url0
-                else:
-                    rows, _block, _max_page_unused, url = fetch_topic_page(
-                        topic_id, start_offset=start_offset, headers=headers
-                    )
+                    if start_offset == 0:
+                        rows = rows0
+                        url = url0
+                    else:
+                        rows, _block, _max_page_unused, url = fetch_topic_page(
+                            topic_id, start_offset=start_offset, headers=headers
+                        )
 
-                topic_url = url
-                logging.info("📄 start=%s got %d replies", start_offset, len(rows))
+                    topic_url = url
+                    logging.info("📄 start=%s got %d replies", start_offset, len(rows))
 
-                # If rows are not found on a certain page: This doesn't necessarily mean a break is needed (it can happen occasionally), skip it for now.
-                if not rows:
-                    logging.warning("⚠️ start=%s returned 0 rows; skip", start_offset)
-                    continue
+                    # If rows are not found on a certain page: This doesn't necessarily mean a break is needed (it can happen occasionally), skip it for now.
+                    if not rows:
+                        logging.warning("⚠️ start=%s returned 0 rows; skip", start_offset)
+                        continue
 
+                    with conn.cursor() as cursor:
+                        for idx, li in enumerate(rows):
+                            floor_no = start_offset + idx + 1  # 1..N continuous floor number across pages
+                            reply = parse_reply_row(li, floor_no=floor_no, op_user_id=op_user_id)
+                            insert_reply(cursor, topic_id, topic_title, topic_url, reply)
+
+                        conn.commit()
+                        safe_sleep(20, 30)
+                except KeyboardInterrupt:
+                    raise
+                except (psycopg2.Error, Exception) as e:
+                    topic_success = False
+                    conn.rollback()
+                    logging.error("❌ Page failed: %s (start=%s)", e, start_offset)
+                    safe_sleep(10, 20)
+
+            if topic_success:
                 with conn.cursor() as cursor:
-                    for idx, li in enumerate(rows):
-                        floor_no = start_offset + idx + 1  # 1..N continuous floor number across pages
-                        reply = parse_reply_row(li, floor_no=floor_no, op_user_id=op_user_id)
-                        insert_reply(cursor, topic_id, topic_title, topic_url, reply)
-
+                    cursor.execute(SQL_MARK_CRAWLED, (topic_id,))
                     conn.commit()
+                logging.info("✅ Marked topic_id=%s as crawled", topic_id)
 
-                safe_sleep(20, 30)
-
-            except (psycopg2.Error, Exception) as e:
-                conn.rollback()
-                logging.error("❌ Page failed: %s (start=%s)", e, start_offset)
-                safe_sleep(10, 20)
+        except KeyboardInterrupt:
+            raise
+        except Exception as e:
+            topic_success = False
+            logging.error("❌ Failed to crawl whole topic_id=%s: %s", topic_id, e)
 
     finally:
         conn.close()
 
 
 if __name__ == "__main__":
-    for post in POST_LIST:
-        logging.info("🚀 Starting Douban topics scraper")
-        main_loop(post)  # Adjust start_page and max_pages as needed
+    logging.info("params since=%s keyword=%s limit=%s", SINCE_TIMESTAMP, TITLE_KEYWORD, LIMIT_TOPICS)
+
+    conn = get_db_conn()
+    try:
+        topic_ids = get_topic_list(conn)
+        logging.info("🧮 topic_ids count=%d", len(topic_ids))
+
+    finally:
+        conn.close()
+
+    for topic_id in topic_ids:
+        logging.info("🚀 Starting Douban topics scraper topic_id=%s", topic_id)
+        main_loop(topic_id)
     logging.shutdown()
 

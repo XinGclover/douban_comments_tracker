@@ -230,4 +230,5 @@ google/google_credentials.json
 
 token.json
 
+utils/config.py
 

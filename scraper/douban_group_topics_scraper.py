@@ -17,8 +17,9 @@ from utils.html_tools import extract_href_info
 LOG_PATH = Path(__file__).resolve().parent.parent / "logs" / "douban_group_topics_scraper.log"
 setup_logger(log_file=str(LOG_PATH))
 
+MAX_PAGE = 20
 
-BASE_URL_PAGE = "https://www.douban.com/group/search?start={}&cat=1013&sort=time&q=%E6%9C%9D%E9%9B%AA%E5%BD%95"
+BASE_URL_PAGE = "https://www.douban.com/group/search?start={}&cat=1013&sort=time&q=%E5%85%B0%E8%BF%AA"
 
 INSERT_SQL = f"""
     INSERT INTO {TABLE_PREFIX}_group_topics (
@@ -27,7 +28,7 @@ INSERT_SQL = f"""
     VALUES (%s, %s, %s, %s, %s, %s)
     ON CONFLICT (topic_id) DO NOTHING
     """
-KEY_WORD = "朝雪录"
+KEY_WORD = "兰迪"
 
 
 def parse_row(row):
@@ -111,7 +112,7 @@ def main_loop():
     conn = get_db_conn()
     request_headers = get_headers()
 
-    for page in range(0,1):  # Adjust range as needed
+    for page in range(5, MAX_PAGE):  # Adjust range as needed
         try:
             logging.info("\n📄 Fetching topics on page %s...", page)
             topics = fetch_topic_page(page, headers=request_headers)

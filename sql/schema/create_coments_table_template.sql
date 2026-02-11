@@ -213,6 +213,13 @@ CREATE TABLE zhaoxuelu_group_topics (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP  
 );
 
+--2026.02.11 modify
+ALTER TABLE public.zhaoxuelu_group_topics
+ADD COLUMN is_crawled boolean DEFAULT false;
+
+ALTER TABLE public.zhaoxuelu_group_topics
+ADD COLUMN crawled_at timestamp with time zone;
+
 
 --Create douban group topics
 --DROP TABLE other_group_topics 
