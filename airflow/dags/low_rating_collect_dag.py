@@ -22,7 +22,7 @@ with DAG(
     dag_id='low_rating_collect_dag',
     default_args=default_args,
     description='Scheduled get Douban review collection of low rating users of Zhaoxuelu or others',
-    schedule_interval=timedelta(hours=3),  # Every 3 hours
+    schedule_interval=timedelta(hours=6),  # Every 3 hours
     start_date=datetime(2025, 7, 3, 8, 0, 0, tzinfo=stockholm_tz),
     catchup=False,
     max_active_runs=1,

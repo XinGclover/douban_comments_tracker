@@ -213,5 +213,77 @@ CREATE TABLE zhaoxuelu_group_topics (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP  
 );
 
+--2026.02.11 modify
+ALTER TABLE public.zhaoxuelu_group_topics
+ADD COLUMN is_crawled boolean DEFAULT false;
+
+ALTER TABLE public.zhaoxuelu_group_topics
+ADD COLUMN crawled_at timestamp with time zone;
+
+
+--Create douban group topics
+--DROP TABLE other_group_topics 
+CREATE TABLE other_group_topics (
+    topic_id BIGINT PRIMARY KEY,  
+    title TEXT NOT NULL,
+    full_time TIMESTAMP WITH TIME ZONE,  
+    reply_count INTEGER,
+    group_id VARCHAR(20),  
+    group_name TEXT,
+	status VARCHAR(10),
+	key_word VARCHAR(20),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP  
+);
+
+
+
+--Create douban post comments
+--DROP TABLE douban_post
+CREATE TABLE douban_post(
+    topic_id BIGINT,
+	user_id VARCHAR(20),  
+    user_name TEXT,  
+    pubtime TIMESTAMP WITHOUT TIME ZONE,
+	ip VARCHAR(20),
+	comment_text TEXT NOT NULL,
+	like_count INTEGER,
+	CONSTRAINT douban_post_unique UNIQUE (topic_id, user_id, pubtime)
+);
+
+TRUNCATE TABLE douban_post;
+
+
+--Create group members
+-- DROP TABLE douban_group_members
+CREATE TABLE IF NOT EXISTS douban_group_members (
+  group_id      INT NOT NULL,
+  member_id     VARCHAR(20) NOT NULL,
+  member_name   TEXT,
+  img_url   	TEXT,
+  first_seen_at TIMESTAMP NOT NULL DEFAULT now(),
+  PRIMARY KEY (group_id, member_id)
+);
+
+
+--Create group table
+--DROP TABLE douban_groups;
+CREATE TABLE IF NOT EXISTS douban_groups (
+  group_id        INT PRIMARY KEY,
+  group_name      TEXT NOT NULL,
+  group_who       TEXT,
+  max_page        INT,
+  is_active       BOOLEAN DEFAULT true,
+  created_at      TIMESTAMP NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMP,
+  last_crawled_at TIMESTAMP
+);
+
+
+
+
+
+
+
+
 
 

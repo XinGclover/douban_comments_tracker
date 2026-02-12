@@ -197,3 +197,7 @@ ALTER TABLE iqiyi_rank_dramas
 ALTER COLUMN main_index TYPE INTEGER
 USING main_index::INTEGER;
 
+
+
+
+
