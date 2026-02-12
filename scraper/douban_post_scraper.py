@@ -158,7 +158,7 @@ def fetch_topic_page(topic_id, start_offset=0, headers=None):
         resp = requests.get(url, headers=headers, timeout=10)
         if resp.status_code != 200:
             logging.error("Failed: %s", resp.status_code)
-            return [], None, None
+            return [], None, None, url
 
         block = BeautifulSoup(resp.text, "html.parser")
         rows = block.find_all("li", class_="comment-item")
