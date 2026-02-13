@@ -235,6 +235,16 @@ CREATE TABLE other_group_topics (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP  
 );
 
+--2026.02.13 modify
+ALTER TABLE public.other_group_topics
+ADD COLUMN is_crawled boolean DEFAULT false;
+
+ALTER TABLE public.other_group_topics
+ADD COLUMN crawled_at timestamp with time zone;
+
+ALTER TABLE public.other_group_topics
+DROP COLUMN status;
+
 
 
 --Create douban post comments

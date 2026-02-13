@@ -18,12 +18,13 @@ setup_logger(log_file=str(LOG_PATH))
 
 BASE_URL_PAGE = "https://www.douban.com/group/topic/{}/?start={}"
 
-GROUP_PREFIX = "zhaoxuelu"
+GROUP_PREFIX = "other"
 TABLE_TOPICS = f"{GROUP_PREFIX}_group_topics"
 
-SINCE_TIMESTAMP = "2026-01-01 12:00:00+01"  # Sweden winter time
+SINCE_TIMESTAMP = "2025-07-13 12:00:00+01"  # Sweden winter time
 
 TITLE_KEYWORD = "%兰迪%"
+EXCLUDE_KEYWORDS = ["%抽奖%", "%开奖%","%庆祝%","%祝贺%","%恭喜%"]  # Exclude topics with these keywords in the title
 LIMIT_TOPICS = 10
 
 SQL_GET_TOPICS = f"""
@@ -33,6 +34,7 @@ SQL_GET_TOPICS = f"""
         full_time >= %s::timestamptz
         AND title LIKE %s
         AND crawled_at IS NULL
+        AND NOT (title ILIKE ANY(%s))
     ORDER BY full_time ASC
     LIMIT %s;
 """
@@ -146,7 +148,7 @@ def parse_reply_row(li, floor_no: int, op_user_id: str):
 
 def get_topic_list(conn):
     with conn.cursor() as cur:
-        cur.execute(SQL_GET_TOPICS, (SINCE_TIMESTAMP, TITLE_KEYWORD, LIMIT_TOPICS))
+        cur.execute(SQL_GET_TOPICS, (SINCE_TIMESTAMP, TITLE_KEYWORD, EXCLUDE_KEYWORDS, LIMIT_TOPICS))
         rows = cur.fetchall()
     return [row[0] for row in rows]
 
@@ -172,7 +174,6 @@ def fetch_topic_page(topic_id, start_offset=0, headers=None):
     except requests.exceptions.RequestException as e:
         logging.error("Error: %s", e)
         return [], None, None, url
-
 
 
 
