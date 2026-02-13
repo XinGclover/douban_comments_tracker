@@ -1,6 +1,19 @@
 import streamlit as st
 import sys
 from pathlib import Path
+import streamlit as st
+
+st.markdown("""
+<style>
+* {
+    font-family: "Apple Color Emoji",
+                 "Segoe UI Emoji",
+                 "Noto Color Emoji",
+                 sans-serif !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))

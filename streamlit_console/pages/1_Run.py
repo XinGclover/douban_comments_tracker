@@ -2,7 +2,7 @@ import streamlit as st
 from streamlit_console.core.runner import run_cmd
 from streamlit_console.core.tasks import TASKS, CATEGORIES
 
-st.title("▶️ Run")
+st.title("▶️ Run Bash Commands")
 
 # 1) choose category
 category = st.radio(

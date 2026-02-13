@@ -236,8 +236,8 @@ CREATE TABLE other_group_topics (
 );
 
 --2026.02.13 modify
-ALTER TABLE public.other_group_topics
-ADD COLUMN is_crawled boolean DEFAULT false;
+ALTER TABLE public.other_group_topics              
+ADD COLUMN is_crawled boolean DEFAULT false;      -- reserved column
 
 ALTER TABLE public.other_group_topics
 ADD COLUMN crawled_at timestamp with time zone;
