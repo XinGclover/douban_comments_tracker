@@ -245,6 +245,11 @@ ADD COLUMN crawled_at timestamp with time zone;
 ALTER TABLE public.other_group_topics
 DROP COLUMN status;
 
+-- 2026.02.14 modify
+ALTER TABLE other_group_topics
+ADD COLUMN crawl_status VARCHAR(20);
+
+
 
 
 --Create douban post comments

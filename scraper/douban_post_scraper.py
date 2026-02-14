@@ -70,9 +70,22 @@ INSERT_SQL = """
 
 SQL_MARK_CRAWLED = f"""
     UPDATE {TABLE_TOPICS}
-    SET crawled_at = NOW()
+    SET crawl_status = %s,
+        crawled_at = NOW()
     WHERE topic_id = %s;
 """
+
+# ===============================
+# Custom Exceptions
+# ===============================
+
+class NotFoundError(Exception):
+    """Raised when topic returns 404"""
+    pass
+class ForbiddenError(Exception):
+    """Raised when topic returns 403"""
+    pass
+
 
 def parse_max_page(block: BeautifulSoup) -> int:
     pager = block.select_one("div.paginator")
@@ -158,9 +171,13 @@ def fetch_topic_page(topic_id, start_offset=0, headers=None):
 
     try:
         resp = requests.get(url, headers=headers, timeout=10)
-        if resp.status_code != 200:
-            logging.error("Failed: %s", resp.status_code)
-            return [], None, None, url
+        status = resp.status_code
+        if status != 200:
+            if status == 404:
+                raise NotFoundError(f"404 topic_id={topic_id}")
+            if status == 403:
+                raise ForbiddenError(f"403 topic_id={topic_id}")
+            raise Exception(f"Unexpected HTTP status: {status}")
 
         block = BeautifulSoup(resp.text, "html.parser")
         rows = block.find_all("li", class_="comment-item")
@@ -175,7 +192,8 @@ def fetch_topic_page(topic_id, start_offset=0, headers=None):
         logging.error("Error: %s", e)
         return [], None, None, url
 
-
+def mark_topic_status(cursor, topic_id, status):
+    cursor.execute(SQL_MARK_CRAWLED, (status, topic_id))
 
 CRAWLER_VERSION = "topic_post_raw_v1"
 
@@ -217,8 +235,7 @@ def main_loop(topic_id: int):
         topic_url = url0
 
         if not block0:
-            logging.error("❌ Failed to load first page HTML. topic_id=%s", topic_id)
-            return
+            raise Exception("empty_html_first_page")
 
         # 2) Parse the OP and perform upsert (only once).
         op_meta = parse_op(block0)
@@ -252,54 +269,71 @@ def main_loop(topic_id: int):
 
         topic_success = True
         # 4) Loop through all page replies
-        try:
-            for start_offset in range(0, max_start + STEP, STEP):
-                try:
-                    logging.info("📄 Fetching replies topic_id=%s start=%s", topic_id, start_offset)
+        for start_offset in range(0, max_start + STEP, STEP):
+            try:
+                logging.info("📄 Fetching replies topic_id=%s start=%s", topic_id, start_offset)
 
-                    if start_offset == 0:
-                        rows = rows0
-                        url = url0
-                    else:
-                        rows, _block, _max_page_unused, url = fetch_topic_page(
-                            topic_id, start_offset=start_offset, headers=headers
-                        )
+                if start_offset == 0:
+                    rows = rows0
+                    url = url0
+                else:
+                    rows, _block, _max_page_unused, url = fetch_topic_page(
+                        topic_id, start_offset=start_offset, headers=headers
+                    )
 
-                    topic_url = url
-                    logging.info("📄 start=%s got %d replies", start_offset, len(rows))
+                topic_url = url
+                logging.info("📄 start=%s got %d replies", start_offset, len(rows))
 
-                    # If rows are not found on a certain page: This doesn't necessarily mean a break is needed (it can happen occasionally), skip it for now.
-                    if not rows:
-                        logging.warning("⚠️ start=%s returned 0 rows; skip", start_offset)
-                        continue
+                # If rows are not found on a certain page: This doesn't necessarily mean a break is needed (it can happen occasionally), skip it for now.
+                if not rows:
+                    logging.warning("⚠️ start=%s returned 0 rows; skip", start_offset)
+                    continue
 
-                    with conn.cursor() as cursor:
-                        for idx, li in enumerate(rows):
-                            floor_no = start_offset + idx + 1  # 1..N continuous floor number across pages
-                            reply = parse_reply_row(li, floor_no=floor_no, op_user_id=op_user_id)
-                            insert_reply(cursor, topic_id, topic_title, topic_url, reply)
-
-                        conn.commit()
-                        safe_sleep(20, 30)
-                except KeyboardInterrupt:
-                    raise
-                except (psycopg2.Error, Exception) as e:
-                    topic_success = False
-                    conn.rollback()
-                    logging.error("❌ Page failed: %s (start=%s)", e, start_offset)
-                    safe_sleep(10, 20)
-
-            if topic_success:
                 with conn.cursor() as cursor:
-                    cursor.execute(SQL_MARK_CRAWLED, (topic_id,))
-                    conn.commit()
-                logging.info("✅ Marked topic_id=%s as crawled", topic_id)
+                    for idx, li in enumerate(rows):
+                        floor_no = start_offset + idx + 1  # 1..N continuous floor number across pages
+                        reply = parse_reply_row(li, floor_no=floor_no, op_user_id=op_user_id)
+                        insert_reply(cursor, topic_id, topic_title, topic_url, reply)
 
-        except KeyboardInterrupt:
-            raise
-        except Exception as e:
-            topic_success = False
-            logging.error("❌ Failed to crawl whole topic_id=%s: %s", topic_id, e)
+                conn.commit()
+                safe_sleep(20, 30)
+
+            except KeyboardInterrupt:
+                raise
+            except psycopg2.Error as e:
+                topic_success = False
+                conn.rollback()
+                logging.error("❌ DB error: %s (start=%s)", e, start_offset)
+                safe_sleep(10, 20)
+
+        with conn.cursor() as cursor:
+            if topic_success:
+                mark_topic_status(cursor, topic_id, "success")
+            else:
+                mark_topic_status(cursor, topic_id, "partial_error")
+        conn.commit()
+        logging.info("✅ Marked topic_id=%s as crawled", topic_id)
+
+    except NotFoundError as e:
+        with conn.cursor() as cursor:
+            mark_topic_status(cursor, topic_id, "not_found")
+        conn.commit()
+        logging.warning("🟡 Marked not_found: topic_id=%s", topic_id)
+
+    except ForbiddenError as e:
+        with conn.cursor() as cursor:
+            mark_topic_status(cursor, topic_id, "forbidden")
+        conn.commit()
+        logging.warning("🟠 Marked forbidden: topic_id=%s", topic_id)
+
+    except KeyboardInterrupt:
+        raise
+    except Exception as e:
+        topic_success = False
+        with conn.cursor() as cursor:
+            mark_topic_status(cursor, topic_id, "error")
+        conn.commit()
+        logging.error("❌ Failed to crawl whole topic_id=%s: %s", topic_id, e)
 
     finally:
         conn.close()
