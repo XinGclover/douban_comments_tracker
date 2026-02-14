@@ -23,7 +23,7 @@ TABLE_TOPICS = f"{GROUP_PREFIX}_group_topics"
 
 SINCE_TIMESTAMP = "2025-07-13 12:00:00+01"  # Sweden winter time
 
-TITLE_KEYWORD = "%兰迪%"
+TITLE_KEYWORDS = ["%兰迪%", "%landy%"]
 EXCLUDE_KEYWORDS = ["%抽奖%", "%开奖%","%庆祝%","%祝贺%","%恭喜%"]  # Exclude topics with these keywords in the title
 LIMIT_TOPICS = 10
 
@@ -32,7 +32,7 @@ SQL_GET_TOPICS = f"""
     FROM {TABLE_TOPICS}
     WHERE
         full_time >= %s::timestamptz
-        AND title LIKE %s
+        AND title ILIKE ANY(%s)
         AND crawled_at IS NULL
         AND NOT (title ILIKE ANY(%s))
     ORDER BY full_time ASC
@@ -148,7 +148,7 @@ def parse_reply_row(li, floor_no: int, op_user_id: str):
 
 def get_topic_list(conn):
     with conn.cursor() as cur:
-        cur.execute(SQL_GET_TOPICS, (SINCE_TIMESTAMP, TITLE_KEYWORD, EXCLUDE_KEYWORDS, LIMIT_TOPICS))
+        cur.execute(SQL_GET_TOPICS, (SINCE_TIMESTAMP, TITLE_KEYWORDS, EXCLUDE_KEYWORDS, LIMIT_TOPICS))
         rows = cur.fetchall()
     return [row[0] for row in rows]
 
@@ -306,7 +306,7 @@ def main_loop(topic_id: int):
 
 
 if __name__ == "__main__":
-    logging.info("params since=%s keyword=%s limit=%s", SINCE_TIMESTAMP, TITLE_KEYWORD, LIMIT_TOPICS)
+    logging.info("params since=%s keyword=%s limit=%s", SINCE_TIMESTAMP, TITLE_KEYWORDS, LIMIT_TOPICS)
 
     conn = get_db_conn()
     try:

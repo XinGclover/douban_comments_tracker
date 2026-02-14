@@ -136,4 +136,11 @@ JOIN douban_groups dg
   ON dg.group_id = dgm.group_id
 GROUP BY dgm.group_id, dg.group_name,dg.group_who
 --ORDER BY user_cnt DESC;
+
+
+--6.
+CREATE OR REPLACE VIEW v_posts_amount_uncrawled AS
+SELECT COUNT(topic_id) FROM public.other_group_topics
+WHERE key_word IN ('兰迪','landy')
+AND crawled_at IS NULL;
  

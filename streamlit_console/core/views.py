@@ -11,7 +11,7 @@ CATEGORIES = [
 
 VIEWS = [
     {
-        "name": "🧠 未分析的回复数量",
+        "name": "📈 未分析的回复数量",
         "view": "v_reply_amount_unlabeled",
         "category": "LLM Analysis",
         "desc": "剩余 LLM 标注的回复数量",
@@ -49,5 +49,14 @@ VIEWS = [
         "desc": "各后花园给朝雪录打1星的人数统计",
         "sortable": ["user_cnt"],
         "default_order": "user_cnt DESC",
+    },
+    {
+        "name": "📈 未爬取话题数（兰迪，landy）",
+        "view": "v_posts_amount_uncrawled",
+        "category": "Douban Topics",
+        "desc": "统计截止目前，话题表中未爬取的兰迪,landy相关话题数量",
+        "sortable": [],
+        "default_order": None,
     }
+
 ]

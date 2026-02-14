@@ -86,7 +86,7 @@ result_container = st.container()
 with col_left:
     st.subheader("1) 选择查询")
 
-    category = st.radio("Category", CATEGORIES, horizontal=False)
+    category = st.radio("Category", CATEGORIES, horizontal=True)
     q_list = queries_by_category(category)
 
     if not q_list:
@@ -112,7 +112,7 @@ with col_right:
     # Optional：limit
     limit = st.number_input("Limit", min_value=1, max_value=50000, value=q.default_limit or 500, step=50)
 
-    run = st.button("▶️ Run", type="primary", use_container_width=True)
+    run = st.button("▶️ Run", type="primary", use_container_width=False)
 
 
 with result_container:

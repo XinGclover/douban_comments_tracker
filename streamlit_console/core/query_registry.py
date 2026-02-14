@@ -58,7 +58,7 @@ QUERIES: List[QueryDef] = [
                 type="text",
                 required=True,
                 placeholder="239300232",
-                help="Douban usrer ID",
+                help="Douban user ID",
             ),
         ],
         default_limit=200,

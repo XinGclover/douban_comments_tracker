@@ -65,11 +65,17 @@ topic_list = [
         "key_word": "兰迪",
         "url_code": "%E5%85%B0%E8%BF%AA",
         "start": 0,
-        "end": 59
+        "end": 5
     },
+    # {
+    #     "key_word": "lld",
+    #     "url_code": "lld",
+    #     "start": 0,
+    #     "end": 59
+    # }
     {
-        "key_word": "lld",
-        "url_code": "lld",
+        "key_word": "landy",
+        "url_code": "landy",
         "start": 0,
         "end": 59
     }
@@ -82,7 +88,7 @@ INSERT_SQL = f"""
     INSERT INTO other_group_topics (
         topic_id, title, full_time, reply_count, group_id, group_name,key_word
     )
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    VALUES (%s, %s, %s, %s, %s, %s, %s)
     ON CONFLICT (topic_id) DO NOTHING
     """
 
