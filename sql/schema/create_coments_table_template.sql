@@ -250,6 +250,11 @@ ALTER TABLE other_group_topics
 ADD COLUMN crawl_status VARCHAR(20);
 
 
+-- 2026.02.16 modify
+ALTER TABLE other_group_topics
+ALTER COLUMN group_id TYPE bigint
+USING group_id::bigint;
+
 
 
 --Create douban post comments

@@ -23,6 +23,7 @@ TABLE_TOPICS = f"{GROUP_PREFIX}_group_topics"
 
 SINCE_TIMESTAMP = "2025-07-13 12:00:00+01"  # Sweden winter time
 
+EXCLUDE_GROUP = [742550, 754923, 754719]   #'有趣读书旅店''萌物研究所''仙女教母的魔法森林'
 TITLE_KEYWORDS = ["%兰迪%", "%landy%"]
 EXCLUDE_KEYWORDS = ["%抽奖%", "%开奖%","%庆祝%","%祝贺%","%恭喜%"]  # Exclude topics with these keywords in the title
 LIMIT_TOPICS = 10
@@ -32,6 +33,7 @@ SQL_GET_TOPICS = f"""
     FROM {TABLE_TOPICS}
     WHERE
         full_time >= %s::timestamptz
+        AND group_id <> ALL(%s::bigint[])
         AND title ILIKE ANY(%s)
         AND crawled_at IS NULL
         AND NOT (title ILIKE ANY(%s))
@@ -161,7 +163,7 @@ def parse_reply_row(li, floor_no: int, op_user_id: str):
 
 def get_topic_list(conn):
     with conn.cursor() as cur:
-        cur.execute(SQL_GET_TOPICS, (SINCE_TIMESTAMP, TITLE_KEYWORDS, EXCLUDE_KEYWORDS, LIMIT_TOPICS))
+        cur.execute(SQL_GET_TOPICS, (SINCE_TIMESTAMP, EXCLUDE_GROUP, TITLE_KEYWORDS, EXCLUDE_KEYWORDS, LIMIT_TOPICS))
         rows = cur.fetchall()
     return [row[0] for row in rows]
 
