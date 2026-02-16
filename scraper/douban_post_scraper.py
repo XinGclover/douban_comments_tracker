@@ -21,8 +21,10 @@ BASE_URL_PAGE = "https://www.douban.com/group/topic/{}/?start={}"
 GROUP_PREFIX = "other"
 TABLE_TOPICS = f"{GROUP_PREFIX}_group_topics"
 
-SINCE_TIMESTAMP = "2025-07-13 12:00:00+01"  # Sweden winter time
+ONLY_TOPIC_ID = None  # For debugging : only crawl this topic_id, e.g. 491901972
+# ONLY_TOPIC_ID = 476200587
 
+SINCE_TIMESTAMP = "2025-07-13 12:00:00+01"  # Sweden winter time
 EXCLUDE_GROUP = [742550, 754923, 754719]   #'有趣读书旅店''萌物研究所''仙女教母的魔法森林'
 TITLE_KEYWORDS = ["%兰迪%", "%landy%"]
 EXCLUDE_KEYWORDS = ["%抽奖%", "%开奖%","%庆祝%","%祝贺%","%恭喜%"]  # Exclude topics with these keywords in the title
@@ -161,11 +163,18 @@ def parse_reply_row(li, floor_no: int, op_user_id: str):
 
     return result
 
-def get_topic_list(conn):
-    with conn.cursor() as cur:
-        cur.execute(SQL_GET_TOPICS, (SINCE_TIMESTAMP, EXCLUDE_GROUP, TITLE_KEYWORDS, EXCLUDE_KEYWORDS, LIMIT_TOPICS))
+def pick_topic_ids(conn) -> list[str]:
+    """Return topic_ids based on mode."""
+    if ONLY_TOPIC_ID:        # one topic mode
+        return [str(ONLY_TOPIC_ID)]
+
+    with conn.cursor() as cur:       # batch mode
+        cur.execute(
+            SQL_GET_TOPICS,
+            (SINCE_TIMESTAMP, EXCLUDE_GROUP, TITLE_KEYWORDS, EXCLUDE_KEYWORDS, LIMIT_TOPICS),
+        )
         rows = cur.fetchall()
-    return [row[0] for row in rows]
+    return [str(row[0]) for row in rows]
 
 
 def fetch_topic_page(topic_id, start_offset=0, headers=None):
@@ -346,7 +355,7 @@ if __name__ == "__main__":
 
     conn = get_db_conn()
     try:
-        topic_ids = get_topic_list(conn)
+        topic_ids = pick_topic_ids(conn)
         logging.info("🧮 topic_ids count=%d", len(topic_ids))
 
     finally:

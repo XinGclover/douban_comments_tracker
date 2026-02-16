@@ -117,10 +117,10 @@ QUERIES: List[QueryDef] = [
         sql="""
         SELECT
             p.user_name,
+            p.content_text,
             p.topic_title,
             p.post_type,
             p.floor_no,
-            p.content_text,
             p.pubtime,
             t.group_name,
             p.ip_location,
