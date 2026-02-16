@@ -19,7 +19,7 @@ setup_logger(log_file=str(LOG_PATH))
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
 MODEL = os.getenv("OLLAMA_MODEL", "qwen3:4b")
 PROMPT_VERSION = os.getenv("PROMPT_VERSION", "v1_qwen3_4b_json").strip()
-BATCH_SIZE = int(os.getenv("BATCH_SIZE", "50"))
+BATCH_SIZE = int(os.getenv("BATCH_SIZE", "100"))
 
 
 PROMPT_TEMPLATE = """

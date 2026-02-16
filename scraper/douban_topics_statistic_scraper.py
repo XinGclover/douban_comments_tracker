@@ -61,20 +61,24 @@ topic_list = [
     #     "start": 0,
     #     "end": 59
     # },
+    {
+        "key_word": "兰迪",
+        "url_code": "%E5%85%B0%E8%BF%AA",
+        "start": 0,
+        "end": 2
+    },
     # {
-    #     "key_word": "兰迪",
-    #     "url_code": "%E5%85%B0%E8%BF%AA",
-    #     "status": "current",
+    #     "key_word": "lld",
+    #     "url_code": "lld",
     #     "start": 0,
     #     "end": 59
-    # },
-    {
-        "key_word": "lld",
-        "url_code": "lld",
-        "status": "finished",
-        "start": 0,
-        "end": 59
-    }
+    # }
+    # {
+    #     "key_word": "landy",
+    #     "url_code": "landy",
+    #     "start": 0,
+    #     "end": 59
+    # }
 ]
 
 
@@ -82,9 +86,9 @@ BASE_URL_PAGE = "https://www.douban.com/group/search?start={}&cat=1013&sort=time
 
 INSERT_SQL = f"""
     INSERT INTO other_group_topics (
-        topic_id, title, full_time, reply_count, group_id, group_name,status,key_word
+        topic_id, title, full_time, reply_count, group_id, group_name,key_word
     )
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    VALUES (%s, %s, %s, %s, %s, %s, %s)
     ON CONFLICT (topic_id) DO NOTHING
     """
 
@@ -157,7 +161,6 @@ def insert_single_topic(cursor, topic_dict, topic):
             topic_dict['reply_count'],
             topic_dict['group_id'],
             topic_dict['group_name'],
-            topic['status'],
             topic['key_word']
         )
         cursor.execute(INSERT_SQL, params)

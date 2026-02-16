@@ -1,35 +1,51 @@
 # ❄️ Drama Comment Tracking and Analysis Project #
 
-This project aims to continuously scrape the latest short comments and user information for the Chinese drama from Douban, store them in a local PostgreSQL database, and later analyze user rating behavior to detect astroturfing activities, build fan profiles, and track public opinion trends.
+This project continuously scrapes the latest short comments and user information for a Chinese drama from Douban, stores them in a local PostgreSQL database, and applies AI-powered analysis to detect astroturfing activities, build fan behavior profiles, and track public opinion trends in real time.
 
-### 🎯 Project Objectives ###
-⏱ High-frequency scraping: Scrape the latest Douban short comments every hour starting from the show's release date
-👤 User profiling: Record user IDs and fetch their historical rating activity
-🕵️‍♀️ Astroturfing detection: Analyze patterns in ratings, comment timing, and text to identify fake or coordinated accounts
-📊 Trend analysis: Visualize public opinion dynamics, sentiment shifts, and topic heat over time
+### 🎯 Why This Project Matters ###
+Online rating platforms are vulnerable to coordinated manipulation campaigns.
+This project explores how to detect structured narrative amplification using:
+* Semantic modeling (LLM)
+* Community network analysis
+* Temporal anomaly detection
+* Behavioral clustering
+It demonstrates end-to-end data engineering + AI integration in a real-world social signal problem.
 
-### 🧪 Current Features ###
-#### ⏱ Automated Hourly Scraping ####
-Automatically scrapes the latest short comments from Douban every hour using a scheduled task.
-#### 💬 Comment & User Data Extraction ####
-Collects key fields including comment content, user ID, comment timestamp, and number of likes.
+### 🚀 Project Objectives ###
+#### ⏱ High-frequency scraping: ####
+Continuously scrape the latest Douban short comments every hour starting from the show’s release date. In addition, perform keyword-based topic discovery and crawl full threads (original posts + all replies) to capture complete discussion structures.
+#### 👤 User profiling: ####
+Track user IDs and reconstruct their historical rating timelines to build behavioral fingerprints. Users are further mapped to their Douban group memberships to analyze community affiliation and cross-group interaction patterns.
+#### 🕵️‍♀️ Astroturfing detection: ####
+Detect coordinated rating and comment manipulation by integrating temporal burst analysis, behavioral consistency modeling, and LLM-based semantic stance classification. Group affiliation bias is incorporated to assess whether collective negativity reflects organic disagreement or structured narrative amplification.
+#### 📊 Trend analysis: ####
+Model public opinion dynamics over time, including rating waves, sentiment shifts, and discussion heat evolution. Identify structural changes in narrative direction and cross-community polarization.
+#### 🤖 AI-powered comment classification: ####
+Use a locally hosted LLM pipeline to classify stance, sentiment polarity, sarcasm, and rebuttal behavior in structured JSON format. This semantic layer enables higher-level narrative and coordination analysis beyond keyword filtering.
+#### 🖥 Interactive analytics console: ####
+Provide a unified Streamlit-based control panel to execute scraping, AI analysis, and streaming pipelines. The console also enables parameterized SQL querying and interactive exploration of analytical database views.
 
-### 🗃 Data Storage in PostgreSQL ###
-All collected data is saved into a structured PostgreSQL database for further analysis.
-#### 🔍 User Rating Behavior Tracking (in development) ####
-Fetches historical rating records of commenting users to build detailed user profiles.
-#### 🕵️‍♂️ Astroturfing Detection & Analysis (in development) ####
-Uses temporal patterns, user activity, and comment sentiment to identify potential spam or coordinated behavior (a.k.a. "water army").
-
+### 🧠 Key Technical Highlights ###
+* Local LLM integration with structured JSON output
+* Batch + streaming hybrid architecture
+* Kafka-based low-rating burst detection
+* Behavioral modeling across communities
+* Layered data architecture (Bronze → Silver → Gold)
+* Operational control console (Streamlit)
 
 ### 🧱 Tech Stack ###
-* Python – Core scraping and data logic (with requests, BeautifulSoup, pandas)
-* PostgreSQL – Relational database for structured storage
-* Airflow (planned) – For hourly task scheduling and monitoring
-* Jupyter Notebook – Used for exploratory data analysis and prototyping
-* Metabase – For dashboard creation and visualizations locally
-* Kafka - Real-time streaming of short reviews; enables batch-wise low-rating detection and trigger actions.
-    |
+| Layer         | Technology                       |
+| ------------- | -------------------------------- |
+| Scraping      | Python (requests, BeautifulSoup) |
+| Storage       | PostgreSQL 16                    |
+| AI            | Local LLM via Ollama             |
+| Streaming     | Kafka                            |
+| Scheduling    | Airflow                          |
+| Visualization | Metabase                         |
+| Control Panel | Streamlit                        |
+| Analysis      | Pandas, SQL, Jupyter             |
+----------------------------------------------------
+
 
 ## Project Scripts & Command Reference
 This README provides a structured overview of key scripts and commands used in the project, including environment setup, Airflow, Docker, and Kafka pipeline operations.
@@ -49,6 +65,8 @@ This README provides a structured overview of key scripts and commands used in t
 | Kafka Start       | `docker-compose up -d`                                       | Start Kafka and Zookeeper services via Docker                               | `cd kafka_docker && docker-compose up -d`      |
 | Kafka Stop        | `bash scripts/stop_kafka.sh`                                 | Stop all Kafka and Zookeeper containers                                     | —                                              |
 | Kafka Quick Start | `bash scripts/start_kafka.sh`                                | Shortcut to start all Kafka services                                        | Recommended startup method                     |
+| Steamlit Start    | `streamlit run streamlit_console/app.py`                     | Start a streamlit app                                                       | Open browser: `http://localhost:8501`
+|
 
 ## Mind Map
 
@@ -62,7 +80,7 @@ This README provides a structured overview of key scripts and commands used in t
 ![](/images/5rating_dramas.gif)
 
 
-## Disclaimer
+## 🛡 Disclaimer
 
 This project is intended **for educational and research purposes only**.  
 The code is provided "as is" without any guarantees or warranties.
