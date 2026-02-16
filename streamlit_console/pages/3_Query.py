@@ -5,7 +5,7 @@ import pandas as pd
 import streamlit as st
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from streamlit_console.core.db import test_connection, select_df
+from streamlit_console.core.db import test_connection, select_df,execute_sql
 from streamlit_console.core.config import DB_TARGET
 
 from core.query_registry import CATEGORIES, QUERIES, QueryDef, QueryParam
@@ -74,6 +74,25 @@ def build_params(q: QueryDef) -> dict:
 def queries_by_category(category: str) -> list[QueryDef]:
     return [q for q in QUERIES if q.category == category]
 
+def extract_track_ids(q: QueryDef, params: dict) -> list[str]:
+    keys = getattr(q, "track_id_keys", None) or []
+    out = []
+    for k in keys:
+        v = params.get(k)
+        if v is None:
+            continue
+        s = str(v).strip()
+        if s:
+            out.append(s)
+    # remove duplicates while preserving order
+    seen = set()
+    uniq = []
+    for x in out:
+        if x not in seen:
+            seen.add(x)
+            uniq.append(x)
+    return uniq
+
 
 # -------------------------
 # Page
@@ -121,14 +140,28 @@ with result_container:
     if run:
         try:
             params = build_params(q)
+
             # Add LIMIT to all queries (you don't need to add it if the SQL query already has a LIMIT clause).
             sql = f"SELECT * FROM ({q.sql.strip().rstrip(';')}) t LIMIT %(limit)s"
             params["limit"] = int(limit)
-
             df = select_df(sql, params)
 
             st.success(f"Returned {len(df)} rows")
             st.dataframe(df, use_container_width=True, height=520)
+
+            # Record the input member_id to watchlist for later analysis
+            track_ids = extract_track_ids(q, params)
+            if track_ids:
+                upsert_sql = """
+                INSERT INTO person_watchlist (person_id)
+                VALUES (%(person_id)s)
+                ON CONFLICT (person_id)
+                DO UPDATE SET
+                    last_seen = NOW(),
+                    query_count = person_watchlist.query_count + 1;
+                """
+                for pid in track_ids:
+                    execute_sql(upsert_sql, {"person_id": pid.strip()})
 
             if not df.empty:
                 csv = df.to_csv(index=False).encode("utf-8")

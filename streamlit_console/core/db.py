@@ -21,3 +21,13 @@ def test_connection() -> tuple[bool, str]:
         return True, "OK"
     except Exception as e:
         return False, repr(e)
+
+
+def execute_sql(sql: str, params: dict | None = None) -> None:
+    conn = get_db_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(sql, params or {})
+        conn.commit()
+    finally:
+        conn.close()

@@ -25,7 +25,7 @@ class QueryDef:
     params: List[QueryParam]
     # optional: default limit for this query (overridable by UI input)
     default_limit: Optional[int] = 500
-
+    track_id_keys: list[str] | None = None
 
 CATEGORIES = [
     "Douban Members",
@@ -62,6 +62,7 @@ QUERIES: List[QueryDef] = [
             ),
         ],
         default_limit=200,
+        track_id_keys=["member_id"],
     ),
     QueryDef(
         name="🤡 其他组组员在萌物组（按 group_who）",
@@ -140,6 +141,7 @@ QUERIES: List[QueryDef] = [
             ),
         ],
         default_limit=500,
+        track_id_keys=["user_id"]
     ),
     QueryDef(
         name="📊 其他组组员发表过的对兰迪的评论（按 group_who）",
