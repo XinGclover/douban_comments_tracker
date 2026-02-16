@@ -55,7 +55,7 @@ TASKS = [
     },
     {
         "name": "🔧 更新cookies",
-        "cmd": ["python3", "-m", "update_cookies"],
+        "cmd": ["python3", "-m", "update_cookie"],
         "category": "Tools",
         "desc": "更新 cookies",
     },

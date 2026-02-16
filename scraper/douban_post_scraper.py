@@ -35,7 +35,7 @@ SQL_GET_TOPICS = f"""
         AND title ILIKE ANY(%s)
         AND crawled_at IS NULL
         AND NOT (title ILIKE ANY(%s))
-    ORDER BY full_time ASC
+    ORDER BY full_time DESC
     LIMIT %s;
 """
 

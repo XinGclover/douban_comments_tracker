@@ -65,7 +65,7 @@ topic_list = [
         "key_word": "兰迪",
         "url_code": "%E5%85%B0%E8%BF%AA",
         "start": 0,
-        "end": 5
+        "end": 2
     },
     # {
     #     "key_word": "lld",
@@ -73,12 +73,12 @@ topic_list = [
     #     "start": 0,
     #     "end": 59
     # }
-    {
-        "key_word": "landy",
-        "url_code": "landy",
-        "start": 0,
-        "end": 59
-    }
+    # {
+    #     "key_word": "landy",
+    #     "url_code": "landy",
+    #     "start": 0,
+    #     "end": 59
+    # }
 ]
 
 
