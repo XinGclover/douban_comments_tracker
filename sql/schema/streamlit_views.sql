@@ -18,7 +18,7 @@ WHERE
   
   
   
---2. Check the comment analysis to see which haters are the most active 
+--2. Check the reply analysis to see which haters are the most active 
 -- (excluding Randy's fans who were misjudged).
 -- DROP VIEW v_active_haters
 CREATE OR REPLACE VIEW v_active_haters AS
@@ -160,5 +160,7 @@ WHERE key_word IN ('兰迪','landy')
 				]
 			)
 	);
+	
+
 
  
