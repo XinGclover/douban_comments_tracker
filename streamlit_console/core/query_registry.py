@@ -118,6 +118,7 @@ QUERIES: List[QueryDef] = [
         SELECT
             p.user_name,
             p.content_text,
+            p.topic_id,
             p.topic_title,
             p.post_type,
             p.floor_no,
@@ -144,7 +145,7 @@ QUERIES: List[QueryDef] = [
         track_id_keys=["user_id"]
     ),
     QueryDef(
-        name="📊 其他组组员发表过的对兰迪的评论（按 group_who）",
+        name="📊 萌物组卧底发表过的对兰迪的评论（按 group_who）",
         category="Douban Posts",
         desc="查看某 group_who 组员在萌物组（group_id=754923）发表过的对兰迪的评论",
         sql="""
@@ -167,11 +168,62 @@ QUERIES: List[QueryDef] = [
         SELECT
         p.user_id,
         p.user_name,
+        p.content_text,
         p.topic_id,
         p.topic_title,
         p.post_type,
         p.floor_no,
+        p.pubtime,
+        t.group_name,
+        p.ip_location,
+        p.like_count
+        FROM douban_topic_post_raw p
+        JOIN other_group_topics t
+        ON p.topic_id = t.topic_id
+        JOIN overlap_members o
+        ON p.user_id = o.member_id
+        ORDER BY p.pubtime DESC;
+        """,
+        params=[
+            QueryParam(
+                key="group_who",
+                label="group_who",
+                type="text",
+                required=True,
+                placeholder="兰迪",
+                help="Douban group_who 字段，某明星的组",
+            ),
+        ],
+        default_limit=1000,
+    ),
+    QueryDef(
+        name="📊 其他组组员发表过的对兰迪的评论（按 group_who）",
+        category="Douban Posts",
+        desc="查看某 group_who 组员发表过的对兰迪的评论",
+        sql="""
+        WITH who_groups AS (
+            SELECT group_id
+            FROM douban_groups
+            WHERE group_who = %(group_who)s
+            ),
+            overlap_members AS (
+            SELECT DISTINCT m.member_id
+            FROM douban_group_members m
+            WHERE m.group_id IN (SELECT group_id FROM who_groups)
+                AND EXISTS (
+                SELECT 1
+                FROM douban_group_members x
+                WHERE x.member_id = m.member_id
+                )
+            )
+        SELECT
+        p.user_id,
+        p.user_name,
         p.content_text,
+        p.topic_id,
+        p.topic_title,
+        p.post_type,
+        p.floor_no,
         p.pubtime,
         t.group_name,
         p.ip_location,

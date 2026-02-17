@@ -27,7 +27,7 @@ ONLY_TOPIC_ID = None  # For debugging : only crawl this topic_id, e.g. 491901972
 SINCE_TIMESTAMP = "2025-07-13 12:00:00+01"  # Sweden winter time
 EXCLUDE_GROUP = [742550, 754923, 754719]   #'有趣读书旅店''萌物研究所''仙女教母的魔法森林'
 TITLE_KEYWORDS = ["%兰迪%", "%landy%"]
-EXCLUDE_KEYWORDS = ["%抽奖%", "%开奖%","%庆祝%","%祝贺%","%恭喜%"]  # Exclude topics with these keywords in the title
+EXCLUDE_KEYWORDS = ["%抽奖%", "%开奖%","%庆祝%","%祝贺%","%恭喜%","%抽一个%"]  # Exclude topics with these keywords in the title
 LIMIT_TOPICS = 10
 
 SQL_GET_TOPICS = f"""
