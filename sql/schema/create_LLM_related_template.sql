@@ -146,3 +146,8 @@ CREATE INDEX IF NOT EXISTS ix_post_ai_attack_not_rebuttal
 ON public.douban_topic_post_ai (topic_id, labeled_at)
 WHERE final_attitude_to_landy = 'attack' AND COALESCE(ai_is_rebuttal,false) = false;
 
+-- 2026.2.18 modify
+CREATE INDEX IF NOT EXISTS ix_ai_key3
+ON public.douban_topic_post_ai (topic_id, post_type, floor_no);
+
+

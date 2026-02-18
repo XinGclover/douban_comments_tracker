@@ -26,20 +26,20 @@ WITH base AS (
   SELECT
     r.user_id,
     r.user_name,
+	r.content_text,
     r.topic_id,
     r.topic_title,
     r.post_type,
     r.floor_no,
-    r.content_text,
     r.pubtime,
     a.ai_label,
 	a.labeled_at,
     COUNT(*) OVER (PARTITION BY r.user_id) AS reply_count
   FROM douban_topic_post_ai a
   JOIN douban_topic_post_raw r
-    ON a.topic_id IS NOT DISTINCT FROM r.topic_id
-   AND a.post_type IS NOT DISTINCT FROM r.post_type
-   AND a.floor_no  IS NOT DISTINCT FROM r.floor_no
+    ON a.topic_id = r.topic_id
+   AND a.post_type = r.post_type
+   AND a.floor_no = r.floor_no
   WHERE a.ai_label = 'hater'
 	AND r.user_id NOT IN(
 	SELECT member_id
@@ -51,16 +51,16 @@ SELECT
   user_name,
   reply_count,
   RANK() OVER (ORDER BY reply_count DESC) AS rnk,
+  content_text,
   topic_title,
   post_type,
   floor_no,
-  content_text,
   ai_label,
   pubtime,
   user_id,
   labeled_at
 FROM base
---ORDER BY reply_count DESC, user_id, pubtime;
+ORDER BY reply_count DESC, user_id, pubtime;
   
   
 --3. How many other group members appear in 754923
@@ -88,33 +88,30 @@ GROUP BY m.group_id,g.group_name,g.group_who
 
 
 --4. Distribution of active users in groups
+--DROP VIEW v_reply_users_distribution
 CREATE OR REPLACE VIEW v_reply_users_distribution AS
 SELECT
   r.user_id,
   r.user_name,
   COUNT(*) AS reply_count,
   RANK() OVER (ORDER BY COUNT(*) DESC) AS rnk,
-  array_agg(DISTINCT g.group_name ORDER BY g.group_name) AS group_names
-FROM douban_topic_post_ai a
-JOIN douban_topic_post_raw r
-  ON a.topic_id IS NOT DISTINCT FROM r.topic_id
- AND a.post_type IS NOT DISTINCT FROM r.post_type
- AND a.floor_no  IS NOT DISTINCT FROM r.floor_no
+  array_agg(
+	  DISTINCT g.group_name 
+	  ORDER BY g.group_name
+  ) FILTER (WHERE g.group_id <> 754719) AS group_names,  --hidding仙女
+  array_agg(
+      DISTINCT g.group_who
+      ORDER BY g.group_who
+  ) FILTER (WHERE g.group_id <> 754719) AS group_whos
+FROM douban_topic_post_raw r
 LEFT JOIN douban_group_members m
   ON r.user_id = m.member_id
 LEFT JOIN douban_groups g
-  ON m.group_id = g.group_id
-  
---WHERE a.ai_label = 'hater'                -- 标注为黑子的
-  --AND r.user_id NOT IN (
-  --      SELECT member_id
-  --      FROM douban_group_members
-  --      WHERE group_id IN (742550,754719)  -- 除去有趣读书组,仙女教母
-  --    )
+  ON m.group_id = g.group_id          
 GROUP BY
   r.user_id,
   r.user_name
---ORDER BY reply_count DESC;
+ORDER BY reply_count DESC;
 
 
 --5. 1-star low rating members distribution
