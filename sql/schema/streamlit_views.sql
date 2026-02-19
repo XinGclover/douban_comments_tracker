@@ -48,6 +48,7 @@ WITH base AS (
 	)
 )
 SELECT
+  user_id,
   user_name,
   reply_count,
   RANK() OVER (ORDER BY reply_count DESC) AS rnk,
@@ -57,7 +58,6 @@ SELECT
   floor_no,
   ai_label,
   pubtime,
-  user_id,
   labeled_at
 FROM base
 ORDER BY reply_count DESC, user_id, pubtime;
