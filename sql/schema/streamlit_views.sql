@@ -139,7 +139,8 @@ GROUP BY dgm.group_id, dg.group_name,dg.group_who
 -- DROP VIEW v_posts_amount_uncrawled
 CREATE OR REPLACE VIEW v_posts_amount_uncrawled AS
 SELECT COUNT(topic_id) FROM public.other_group_topics
-WHERE key_word IN ('兰迪','landy')
+WHERE full_time >= timestamptz '2025-07-13 12:00:00+01'
+	AND key_word IN ('兰迪','landy')
 	AND crawled_at IS NULL
 	AND group_id NOT IN(
 	742550,         --'有趣读书旅店'
@@ -158,6 +159,87 @@ WHERE key_word IN ('兰迪','landy')
 			)
 	);
 	
+-- 7.Recorded users profile
+-- DROP VIEW v_groups_watchlist
+CREATE OR REPLACE VIEW v_groups_watchlist AS
+SELECT
+	array_agg(DISTINCT m.member_name ORDER BY m.member_name) AS all_names,
+	w.person_id,
+	array_agg(DISTINCT g.group_name ORDER BY g.group_name) AS all_groups,
+	array_agg(DISTINCT g.group_who ORDER BY g.group_who) AS who
+FROM person_watchlist w
+JOIN douban_group_members m
+    ON w.person_id = m.member_id
+LEFT JOIN douban_groups g
+    ON g.group_id = m.group_id
+GROUP BY w.person_id;
+	
+-- 8. Which group pays more attention to landy
+-- DROP VIEW v_groups_focus
+CREATE OR REPLACE VIEW v_groups_focus AS
+WITH
+topic_metrics AS (
+  SELECT
+    t.group_id,
+    COUNT(*) AS topic_total_posts,
+    COUNT(DISTINCT r.user_id) AS topic_unique_posters
+  FROM douban_topic_post_raw r
+  JOIN other_group_topics t
+    ON t.topic_id = r.topic_id
+  GROUP BY t.group_id
+),
+
+post_by_user AS (
+  SELECT
+    user_id,
+    COUNT(*) AS post_cnt
+  FROM douban_topic_post_raw
+  GROUP BY user_id
+),
+member_metrics AS (
+  SELECT
+    m.group_id,
+    SUM(p.post_cnt) AS member_total_posts,
+    COUNT(DISTINCT p.user_id) AS member_unique_posters
+  FROM douban_group_members m
+  LEFT JOIN post_by_user p
+    ON p.user_id = m.member_id
+  GROUP BY m.group_id
+)
+
+SELECT
+  g.group_id,
+  g.group_name,
+  g.group_who,
+  COALESCE(tm.topic_total_posts, 0)      AS topic_total_posts,
+  COALESCE(tm.topic_unique_posters, 0)   AS topic_unique_posters,
+  COALESCE(mm.member_total_posts, 0)     AS member_total_posts,
+  COALESCE(mm.member_unique_posters, 0)  AS member_unique_posters
+FROM douban_groups g
+LEFT JOIN topic_metrics tm
+  ON tm.group_id = g.group_id
+LEFT JOIN member_metrics mm
+  ON mm.group_id = g.group_id
+ORDER BY member_total_posts DESC, topic_total_posts DESC;
 
 
- 
+-- 9. Whose fans comment landy most
+CREATE OR REPLACE VIEW v_fans_focus AS
+WITH post_by_user AS (
+  SELECT
+    user_id,
+    COUNT(*) AS post_cnt
+  FROM douban_topic_post_raw
+  GROUP BY user_id
+)
+SELECT
+  g.group_who,
+  COALESCE(SUM(p.post_cnt), 0) AS total_posts,
+  COUNT(DISTINCT p.user_id)     AS unique_posters
+FROM douban_group_members m
+JOIN douban_groups g
+  ON g.group_id = m.group_id
+LEFT JOIN post_by_user p
+  ON p.user_id = m.member_id
+GROUP BY g.group_who
+ORDER BY total_posts DESC;

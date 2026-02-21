@@ -44,7 +44,8 @@ QUERIES: List[QueryDef] = [
         SELECT
           m.member_id,
           m.member_name,
-          array_agg(g.group_name ORDER BY g.group_name) AS group_names
+          array_agg(g.group_name ORDER BY g.group_name) AS group_names,
+          array_agg(DISTINCT g.group_who ORDER BY g.group_who) AS group_whos
         FROM douban_group_members m
         JOIN douban_groups g
           ON m.group_id = g.group_id

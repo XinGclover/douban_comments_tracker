@@ -57,6 +57,29 @@ VIEWS = [
         "desc": "统计截止目前，话题表中未爬取的兰迪,landy相关话题数量",
         "sortable": [],
         "default_order": None,
+    },
+    {
+        "name": "🔍 Watchlist里人的分组 ",
+        "view": "v_groups_watchlist",
+        "category": "Douban Members",
+        "desc": "最近搜过的一些人的成分",
+        "sortable": [],
+        "default_order": None,
+    },
+    {
+        "name": "📊 各后花园发帖统计",
+        "view": "v_groups_focus",
+        "category": "Douban Posts",
+        "desc": "统计各个后花园里发帖数量和回复数量，看看哪些后花园对兰迪比较关注",
+        "sortable": [],
+        "default_order": None,
+    },
+    {
+        "name": "📊 明星粉丝发帖统计",
+        "view": "v_fans_focus",
+        "category": "Douban Posts",
+        "desc": "统计明星粉丝发帖数量和回复数量，看看哪些明星粉丝对兰迪比较关注",
+        "sortable": [],
+        "default_order": None,
     }
-
 ]
