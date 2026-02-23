@@ -248,4 +248,62 @@ QUERIES: List[QueryDef] = [
         ],
         default_limit=1000,
     ),
+    QueryDef(
+        name="📊 查询某明星后花园粉丝发帖情况（按 group_who）",
+        category="Douban Topics",
+        desc="按 topic 汇总版：每个 topic 一行 + OP作者 + 该 OP 作者属于哪些 member groups（同一个 group_who 内）",
+        sql="""
+        WITH who_groups AS (
+        SELECT group_id, group_name
+        FROM douban_groups
+        WHERE group_who = %(group_who)s
+        ),
+        op_rows AS (
+        SELECT
+            r.topic_id,
+            r.topic_title,
+            r.topic_url,
+            COALESCE(r.pubtime, t.created_at) AS op_pubtime,
+            r.user_id AS op_user_id,
+            COALESCE(NULLIF(btrim(r.user_name), ''), m.member_name) AS op_user_name,
+            t.group_id   AS topic_group_id,
+            t.group_name AS topic_group_name,
+            wg.group_id  AS member_group_id,
+            wg.group_name AS member_group_name
+        FROM douban_topic_post_raw r
+        JOIN douban_group_members m
+            ON m.member_id = r.user_id
+        JOIN who_groups wg
+            ON wg.group_id = m.group_id
+        LEFT JOIN other_group_topics t
+            ON t.topic_id = r.topic_id
+        WHERE r.post_type = 'op'
+        )
+        SELECT
+        topic_id,
+        topic_title,
+        op_pubtime,
+        op_user_id,
+        op_user_name,
+        topic_group_name,
+        array_agg(DISTINCT member_group_id ORDER BY member_group_id) AS member_group_ids,
+        array_agg(DISTINCT member_group_name ORDER BY member_group_name) AS member_group_names,
+        topic_url
+        FROM op_rows
+        GROUP BY
+        topic_id, topic_title, topic_url, op_pubtime, op_user_id, op_user_name,
+        topic_group_id, topic_group_name
+        ORDER BY op_pubtime DESC NULLS LAST;
+        """,
+        params=[
+            QueryParam(
+                key="group_who",
+                label="group_who",
+                type="text",
+                required=True,
+                placeholder="兰迪",
+                help="Douban group_who 字段，某明星的组",
+            ),
+        ],
+    )
 ]

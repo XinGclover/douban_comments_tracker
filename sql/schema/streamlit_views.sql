@@ -177,53 +177,35 @@ GROUP BY w.person_id;
 -- 8. Which group pays more attention to landy
 -- DROP VIEW v_groups_focus
 CREATE OR REPLACE VIEW v_groups_focus AS
-WITH
-topic_metrics AS (
+WITH member_posts AS (
   SELECT
-    t.group_id,
-    COUNT(*) AS topic_total_posts,
-    COUNT(DISTINCT r.user_id) AS topic_unique_posters
-  FROM douban_topic_post_raw r
-  JOIN other_group_topics t
-    ON t.topic_id = r.topic_id
-  GROUP BY t.group_id
-),
-
-post_by_user AS (
-  SELECT
-    user_id,
-    COUNT(*) AS post_cnt
-  FROM douban_topic_post_raw
-  GROUP BY user_id
-),
-member_metrics AS (
-  SELECT
-    m.group_id,
-    SUM(p.post_cnt) AS member_total_posts,
-    COUNT(DISTINCT p.user_id) AS member_unique_posters
+    m.group_id              AS member_group_id,
+    r.topic_id,
+    r.user_id,
+    r.post_type
   FROM douban_group_members m
-  LEFT JOIN post_by_user p
-    ON p.user_id = m.member_id
-  GROUP BY m.group_id
+  JOIN douban_topic_post_raw r
+    ON r.user_id = m.member_id
 )
-
 SELECT
   g.group_id,
   g.group_name,
   g.group_who,
-  COALESCE(tm.topic_total_posts, 0)      AS topic_total_posts,
-  COALESCE(tm.topic_unique_posters, 0)   AS topic_unique_posters,
-  COALESCE(mm.member_total_posts, 0)     AS member_total_posts,
-  COALESCE(mm.member_unique_posters, 0)  AS member_unique_posters
-FROM douban_groups g
-LEFT JOIN topic_metrics tm
-  ON tm.group_id = g.group_id
-LEFT JOIN member_metrics mm
-  ON mm.group_id = g.group_id
-ORDER BY member_total_posts DESC, topic_total_posts DESC;
+  
+  COUNT(*) AS total_posts_by_members,
+  COUNT(DISTINCT mp.user_id) AS unique_members_who_posted,
+  COUNT(DISTINCT mp.topic_id) AS topics_where_members_appeared,
+  COUNT(DISTINCT mp.topic_id) FILTER (WHERE mp.post_type = 'op') AS topics_with_member_op
+
+FROM member_posts mp
+JOIN douban_groups g
+  ON g.group_id = mp.member_group_id
+GROUP BY g.group_id, g.group_name, g.group_who
+ORDER BY total_posts_by_members DESC;
 
 
 -- 9. Whose fans comment landy most
+-- DROP VIEW v_fans_focus
 CREATE OR REPLACE VIEW v_fans_focus AS
 WITH post_by_user AS (
   SELECT
@@ -234,6 +216,7 @@ WITH post_by_user AS (
 )
 SELECT
   g.group_who,
+  COUNT(DISTINCT m.member_id)           AS total_fans,
   COALESCE(SUM(p.post_cnt), 0) AS total_posts,
   COUNT(DISTINCT p.user_id)     AS unique_posters
 FROM douban_group_members m
