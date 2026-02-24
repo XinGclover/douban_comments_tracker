@@ -73,12 +73,12 @@ topic_list = [
     #     "start": 0,
     #     "end": 59
     # }
-    # {
-    #     "key_word": "landy",
-    #     "url_code": "landy",
-    #     "start": 0,
-    #     "end": 59
-    # }
+    {
+        "key_word": "landy",
+        "url_code": "landy",
+        "start": 0,
+        "end": 2
+    }
 ]
 
 
