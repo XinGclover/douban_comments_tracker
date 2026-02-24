@@ -73,12 +73,12 @@ topic_list = [
     #     "start": 0,
     #     "end": 59
     # }
-    # {
-    #     "key_word": "landy",
-    #     "url_code": "landy",
-    #     "start": 0,
-    #     "end": 59
-    # }
+    {
+        "key_word": "landy",
+        "url_code": "landy",
+        "start": 0,
+        "end": 2
+    }
 ]
 
 
@@ -175,7 +175,7 @@ def main_loop(topic):
     conn = get_db_conn()
     request_headers = get_headers()
 
-    for page in range(0, 60):  # Adjust range as needed
+    for page in range(0, topic['end']):  # Adjust range as needed
         try:
             logging.info("\n📄 Fetching topics on page %s...", page)
             posts = fetch_topic_page(page, headers=request_headers, url_code=topic['url_code'])
