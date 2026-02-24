@@ -25,6 +25,15 @@ Use a locally hosted LLM pipeline to classify stance, sentiment polarity, sarcas
 #### 🖥 Interactive analytics console: ####
 Provide a unified Streamlit-based control panel to execute scraping, AI analysis, and streaming pipelines. The console also enables parameterized SQL querying and interactive exploration of analytical database views.
 
+#### 📊 Interactive Dashboard (Demo Layer) ####
+
+A lightweight Streamlit dashboard has been built to showcase aggregated results from this data engineering pipeline:
+
+🔗 **Live Demo:**  
+https://douban-console-demo.streamlit.app
+
+The dashboard is based on exported analytical tables from PostgreSQL and stored in a DuckDB file for demonstration purposes.
+
 ### 🧠 Key Technical Highlights ###
 * Local LLM integration with structured JSON output
 * Batch + streaming hybrid architecture

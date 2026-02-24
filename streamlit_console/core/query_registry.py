@@ -44,7 +44,8 @@ QUERIES: List[QueryDef] = [
         SELECT
           m.member_id,
           m.member_name,
-          array_agg(g.group_name ORDER BY g.group_name) AS group_names
+          array_agg(g.group_name ORDER BY g.group_name) AS group_names,
+          array_agg(DISTINCT g.group_who ORDER BY g.group_who) AS group_whos
         FROM douban_group_members m
         JOIN douban_groups g
           ON m.group_id = g.group_id
@@ -118,6 +119,7 @@ QUERIES: List[QueryDef] = [
         SELECT
             p.user_name,
             p.content_text,
+            p.topic_id,
             p.topic_title,
             p.post_type,
             p.floor_no,
@@ -144,7 +146,7 @@ QUERIES: List[QueryDef] = [
         track_id_keys=["user_id"]
     ),
     QueryDef(
-        name="📊 其他组组员发表过的对兰迪的评论（按 group_who）",
+        name="📊 萌物组卧底发表过的对兰迪的评论（按 group_who）",
         category="Douban Posts",
         desc="查看某 group_who 组员在萌物组（group_id=754923）发表过的对兰迪的评论",
         sql="""
@@ -167,11 +169,11 @@ QUERIES: List[QueryDef] = [
         SELECT
         p.user_id,
         p.user_name,
+        p.content_text,
         p.topic_id,
         p.topic_title,
         p.post_type,
         p.floor_no,
-        p.content_text,
         p.pubtime,
         t.group_name,
         p.ip_location,
@@ -195,4 +197,113 @@ QUERIES: List[QueryDef] = [
         ],
         default_limit=1000,
     ),
+    QueryDef(
+        name="📊 其他组组员发表过的对兰迪的评论（按 group_who）",
+        category="Douban Posts",
+        desc="查看某 group_who 组员发表过的对兰迪的评论",
+        sql="""
+        WITH who_groups AS (
+            SELECT group_id
+            FROM douban_groups
+            WHERE group_who = %(group_who)s
+            ),
+            overlap_members AS (
+            SELECT DISTINCT m.member_id
+            FROM douban_group_members m
+            WHERE m.group_id IN (SELECT group_id FROM who_groups)
+                AND EXISTS (
+                SELECT 1
+                FROM douban_group_members x
+                WHERE x.member_id = m.member_id
+                )
+            )
+        SELECT
+        p.user_id,
+        p.user_name,
+        p.content_text,
+        p.topic_id,
+        p.topic_title,
+        p.post_type,
+        p.floor_no,
+        p.pubtime,
+        t.group_name,
+        p.ip_location,
+        p.like_count
+        FROM douban_topic_post_raw p
+        JOIN other_group_topics t
+        ON p.topic_id = t.topic_id
+        JOIN overlap_members o
+        ON p.user_id = o.member_id
+        ORDER BY p.pubtime DESC;
+        """,
+        params=[
+            QueryParam(
+                key="group_who",
+                label="group_who",
+                type="text",
+                required=True,
+                placeholder="兰迪",
+                help="Douban group_who 字段，某明星的组",
+            ),
+        ],
+        default_limit=1000,
+    ),
+    QueryDef(
+        name="📊 查询某明星后花园粉丝发帖情况（按 group_who）",
+        category="Douban Topics",
+        desc="按 topic 汇总版：每个 topic 一行 + OP作者 + 该 OP 作者属于哪些 member groups（同一个 group_who 内）",
+        sql="""
+        WITH who_groups AS (
+        SELECT group_id, group_name
+        FROM douban_groups
+        WHERE group_who = %(group_who)s
+        ),
+        op_rows AS (
+        SELECT
+            r.topic_id,
+            r.topic_title,
+            r.topic_url,
+            COALESCE(r.pubtime, t.created_at) AS op_pubtime,
+            r.user_id AS op_user_id,
+            COALESCE(NULLIF(btrim(r.user_name), ''), m.member_name) AS op_user_name,
+            t.group_id   AS topic_group_id,
+            t.group_name AS topic_group_name,
+            wg.group_id  AS member_group_id,
+            wg.group_name AS member_group_name
+        FROM douban_topic_post_raw r
+        JOIN douban_group_members m
+            ON m.member_id = r.user_id
+        JOIN who_groups wg
+            ON wg.group_id = m.group_id
+        LEFT JOIN other_group_topics t
+            ON t.topic_id = r.topic_id
+        WHERE r.post_type = 'op'
+        )
+        SELECT
+        topic_id,
+        topic_title,
+        op_pubtime,
+        op_user_id,
+        op_user_name,
+        topic_group_name,
+        array_agg(DISTINCT member_group_id ORDER BY member_group_id) AS member_group_ids,
+        array_agg(DISTINCT member_group_name ORDER BY member_group_name) AS member_group_names,
+        topic_url
+        FROM op_rows
+        GROUP BY
+        topic_id, topic_title, topic_url, op_pubtime, op_user_id, op_user_name,
+        topic_group_id, topic_group_name
+        ORDER BY op_pubtime DESC NULLS LAST;
+        """,
+        params=[
+            QueryParam(
+                key="group_who",
+                label="group_who",
+                type="text",
+                required=True,
+                placeholder="兰迪",
+                help="Douban group_who 字段，某明星的组",
+            ),
+        ],
+    )
 ]

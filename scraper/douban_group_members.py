@@ -20,12 +20,13 @@ setup_logger(log_file=str(LOG_PATH))
 MEMBERS_URL = "https://www.douban.com/group/{}/members?start={}"  # start: 0, 36, 72, ...
 PEOPLE_ID_RE = re.compile(r"/people/(\d+)/")
 PAGE_SIZE = 36
+SPECIAL_GROUP_ID = 754923
 
 SELECT_GROUPS_SQL = """
 SELECT group_id, group_name, group_who, max_page
     FROM douban_groups
     WHERE is_active = TRUE
-        AND last_crawled_at IS NULL
+        AND group_id = 754923
     ORDER BY group_id;
 """
 
@@ -148,7 +149,7 @@ def main():
                 group_failed = False
 
                 # page: 0..max_page-1  -> start: 0,36,...,(max_page-1)*36
-                for page in range(max_page):
+                for page in range(5):  #incremental crawl: only fetch first 5 pages
                     start = page * PAGE_SIZE
                     try:
                         logging.info("📄 Group %s page %s/%s, start=%s", group_id, page + 1, max_page, start)
