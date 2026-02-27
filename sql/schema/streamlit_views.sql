@@ -226,3 +226,20 @@ LEFT JOIN post_by_user p
   ON p.user_id = m.member_id
 GROUP BY g.group_who
 ORDER BY total_posts DESC;
+
+
+-- 10. Check the crawled posts
+-- DROP VIEW v_crawled_posts
+CREATE OR REPLACE VIEW v_crawled_posts AS
+SELECT 
+	t.topic_id,
+	t.title,
+	t.created_at,
+	MAX(p.floor_no) AS reply_cnt
+FROM other_group_topics t
+JOIN douban_topic_post_raw p
+ON t.topic_id = p.topic_id
+GROUP BY t.topic_id, t.title, t.created_at
+ORDER BY t.created_at DESC;
+
+	

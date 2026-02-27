@@ -49,13 +49,13 @@ QUERIES: List[QueryDef] = [
         FROM douban_group_members m
         JOIN douban_groups g
           ON m.group_id = g.group_id
-        WHERE m.member_id = %(member_id)s
+        WHERE m.member_id = %(user_id)s
         GROUP BY m.member_id, m.member_name
         """,
         params=[
             QueryParam(
-                key="member_id",
-                label="member_id",
+                key="user_id",
+                label="user_id",
                 type="text",
                 required=True,
                 placeholder="239300232",
@@ -63,7 +63,7 @@ QUERIES: List[QueryDef] = [
             ),
         ],
         default_limit=200,
-        track_id_keys=["member_id"],
+        track_id_keys=["user_id"],
     ),
     QueryDef(
         name="🤡 其他组组员在萌物组（按 group_who）",
@@ -110,6 +110,7 @@ QUERIES: List[QueryDef] = [
             ),
         ],
         default_limit=500,
+        track_id_keys=["group_who"],
     ),
     QueryDef(
         name="📊 查某用户对兰迪发表过哪些评论（按 user_id）",
@@ -196,6 +197,7 @@ QUERIES: List[QueryDef] = [
             ),
         ],
         default_limit=1000,
+        track_id_keys=["group_who"],
     ),
     QueryDef(
         name="📊 其他组组员发表过的对兰迪的评论（按 group_who）",
@@ -247,6 +249,7 @@ QUERIES: List[QueryDef] = [
             ),
         ],
         default_limit=1000,
+        track_id_keys=["group_who"],
     ),
     QueryDef(
         name="📊 查询某明星后花园粉丝发帖情况（按 group_who）",
@@ -305,5 +308,57 @@ QUERIES: List[QueryDef] = [
                 help="Douban group_who 字段，某明星的组",
             ),
         ],
-    )
+        track_id_keys=["group_who"],
+    ),
+    QueryDef(
+        name="💬 查询某topic下各后花园组员参与情况（按topic_id)",
+        category="Douban Topics",
+        desc="按 topic_id查询，看看发帖和评论的用户分别属于哪些 group",
+        sql="""
+        WITH topic_users AS (
+        SELECT DISTINCT
+            r.user_id,
+            r.post_type,
+            r.floor_no,
+            r.ip_location,
+            MAX(NULLIF(r.user_name, '')) OVER (PARTITION BY r.user_id) AS user_name
+        FROM douban_topic_post_raw r
+        WHERE r.topic_id = %(topic_id)s
+        )
+        SELECT
+        tu.user_id,
+        tu.user_name,
+        tu.post_type,
+        tu.ip_location,
+        array_agg(DISTINCT tu.floor_no ORDER BY tu.floor_no)
+        FILTER (WHERE tu.floor_no IS NOT NULL AND NULLIF(tu.floor_no::text, '') IS NOT NULL) AS floor_nos,
+        array_agg(DISTINCT g.group_name ORDER BY g.group_name)
+        FILTER (WHERE g.group_name IS NOT NULL) AS group_names,
+        array_agg(DISTINCT g.group_who ORDER BY g.group_who)
+        FILTER (WHERE g.group_who IS NOT NULL) AS group_whos
+        FROM topic_users tu
+        JOIN douban_group_members m
+        ON m.member_id = tu.user_id
+        JOIN douban_groups g
+        ON g.group_id = m.group_id
+        GROUP BY
+        tu.user_id,
+        tu.user_name,
+        tu.post_type,
+        tu.ip_location
+        ORDER BY
+        tu.post_type,
+        tu.user_id;
+        """,
+        params=[
+            QueryParam(
+                key="topic_id",
+                label="topic_id",
+                type="text",
+                required=True,
+                placeholder="477283520",
+                help="Douban topic_id 字段，某话题的ID",
+            ),
+        ],
+    ),
 ]
