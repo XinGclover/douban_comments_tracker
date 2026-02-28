@@ -38,4 +38,4 @@ with DAG(
         bash_command=f'PYTHONPATH={PROJECT_PATH} python3 {PROJECT_PATH}/analysisLLM/label_posts_with_llm.py'
     )
 
-    run_scraper >> run_llm
+    run_scraper

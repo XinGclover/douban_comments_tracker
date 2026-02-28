@@ -75,3 +75,16 @@ ORDER BY high_rating_user_count DESC;
 -- Materialize the view into a table
 CREATE TABLE demo_high_rating_dramas_source_zhaoxuelu AS
 SELECT * FROM view_high_rating_dramas_source_zhaoxuelu;
+
+
+-- 
+CREATE TABLE demo_member_groups AS
+SELECT
+  m.member_id,
+  m.member_name,
+  array_agg(g.group_name ORDER BY g.group_name) AS group_names,
+  array_agg(DISTINCT g.group_who ORDER BY g.group_who) AS group_whos
+FROM douban_group_members m
+JOIN douban_groups g
+  ON m.group_id = g.group_id
+GROUP BY m.member_id, m.member_name

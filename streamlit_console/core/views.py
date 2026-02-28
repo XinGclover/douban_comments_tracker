@@ -81,5 +81,13 @@ VIEWS = [
         "desc": "统计明星粉丝发帖数量和回复数量，看看哪些明星粉丝对兰迪比较关注",
         "sortable": [],
         "default_order": None,
+    },
+    {
+        "name": "📉 已爬取的topics ",
+        "view": "v_crawled_posts",
+        "category": "Douban Topics",
+        "desc": "统计已爬取的topics数量和最后爬取时间，看看哪些话题比较活跃",
+        "sortable": [],
+        "default_order": "created_at DESC",
     }
 ]
