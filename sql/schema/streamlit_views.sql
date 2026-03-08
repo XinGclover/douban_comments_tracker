@@ -92,13 +92,17 @@ GROUP BY m.group_id,g.group_name,g.group_who
 CREATE OR REPLACE VIEW v_reply_users_distribution AS
 SELECT
   r.user_id,
-  r.user_name,
+  array_agg(
+      DISTINCT r.user_name
+      ORDER BY r.user_name
+  ) AS user_names,
+  COUNT(DISTINCT r.user_name) AS name_count,
   COUNT(*) AS reply_count,
   RANK() OVER (ORDER BY COUNT(*) DESC) AS rnk,
   array_agg(
-	  DISTINCT g.group_name 
-	  ORDER BY g.group_name
-  ) FILTER (WHERE g.group_id <> 754719) AS group_names,  --hidding仙女
+      DISTINCT g.group_name
+      ORDER BY g.group_name
+  ) FILTER (WHERE g.group_id <> 754719) AS group_names,  -- hiding 仙女
   array_agg(
       DISTINCT g.group_who
       ORDER BY g.group_who
@@ -107,10 +111,9 @@ FROM douban_topic_post_raw r
 LEFT JOIN douban_group_members m
   ON r.user_id = m.member_id
 LEFT JOIN douban_groups g
-  ON m.group_id = g.group_id          
+  ON m.group_id = g.group_id
 GROUP BY
-  r.user_id,
-  r.user_name
+  r.user_id
 ORDER BY reply_count DESC;
 
 
