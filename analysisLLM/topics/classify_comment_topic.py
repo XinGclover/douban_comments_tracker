@@ -17,6 +17,7 @@ from requests.exceptions import ConnectionError, ReadTimeout
 from db import get_db_conn
 from utils.logger import setup_logger
 import re
+from analysisLLM.llm.ollama_client import call_ollama_with_retry
 
 # =========================
 # config
@@ -124,77 +125,6 @@ def build_prompt(
         [COMMENT]
         {comment}
         """
-
-
-def call_ollama(prompt: str) -> str:
-    payload = {
-        "model": MODEL_NAME,
-        "prompt": prompt,
-        "stream": False,
-        "format": "json",
-        "options": {
-            "temperature": 0.0,
-            "num_predict": 80,
-            "num_ctx": 4096,
-            "think": False,
-        },
-    }
-
-    r = requests.post(OLLAMA_URL, json=payload, timeout=REQUEST_TIMEOUT)
-    r.raise_for_status()
-    data = r.json()
-
-    resp = (data.get("response") or "").strip()
-
-    # fallback: some ollama/model versions may put content into thinking/reasoning fields
-    if not resp:
-        for key in ("thinking", "reasoning", "reasoning_content"):
-            val = data.get(key)
-            if isinstance(val, str) and val.strip():
-                resp = val.strip()
-                logging.warning("response empty, fallback to %s", key)
-                break
-
-    logging.info(
-        "ollama meta: done=%r done_reason=%r error=%r resp_len=%s",
-        data.get("done"),
-        data.get("done_reason"),
-        data.get("error"),
-        len(resp),
-    )
-    logging.debug("ollama resp_head=%r", resp[:300])
-
-    if not resp:
-        raise ValueError(
-            f"ollama response empty. done_reason={data.get('done_reason')} keys={list(data.keys())}"
-        )
-
-    return resp
-
-
-def call_ollama_with_retry(prompt: str, max_retries: int = MAX_RETRIES) -> str:
-    last_err = None
-
-    for attempt in range(1, max_retries + 1):
-        try:
-            return call_ollama(prompt)
-        except (ReadTimeout, ConnectionError, ValueError, requests.HTTPError) as e:
-            last_err = e
-            sleep_s = min(2 ** attempt, 8) + random.random()
-            logging.warning(
-                "⚠️ Ollama failed, retry %s/%s after %.1fs: %r",
-                attempt,
-                max_retries,
-                sleep_s,
-                e,
-            )
-            time.sleep(sleep_s)
-
-    raise last_err
-import re
-import json
-import logging
-from typing import Any
 
 
 def extract_json_object(text: str) -> str | None:
@@ -357,7 +287,21 @@ def process_one_comment(row: dict[str, Any], base_prompt: str, taxonomy_text: st
         taxonomy_text=taxonomy_text
     )
 
-    resp_text = call_ollama_with_retry(prompt)
+    resp_text = call_ollama_with_retry(
+        prompt=prompt,
+        model=MODEL_NAME,
+        url=OLLAMA_URL,
+        timeout=REQUEST_TIMEOUT,
+        format_json=True,
+        options={
+            "temperature": 0.0,
+            "num_predict": 80,
+            "num_ctx": 4096,
+            "think": False,
+        },
+        fallback_thinking=True,
+        max_retries=3,
+    )
     parsed = parse_llm_response(resp_text)
 
     insert_result(
