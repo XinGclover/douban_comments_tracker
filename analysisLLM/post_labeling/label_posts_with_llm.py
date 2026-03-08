@@ -12,15 +12,17 @@ from requests.exceptions import ConnectionError, ReadTimeout
 
 from db import get_db_conn
 from utils.logger import setup_logger
+from analysisLLM.llm.ollama_client import call_ollama_with_retry
 
-LOG_PATH = Path(__file__).resolve().parent.parent / "logs" / "label_posts_with_llm.log"
+LOG_PATH = Path(__file__).resolve().parent.parent.parent / "logs" / "label_posts_with_llm.log"
 setup_logger(log_file=str(LOG_PATH))
 
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
 MODEL = os.getenv("OLLAMA_MODEL", "qwen3:4b")
 PROMPT_VERSION = os.getenv("PROMPT_VERSION", "v1_qwen3_4b_json").strip()
 BATCH_SIZE = int(os.getenv("BATCH_SIZE", "50"))
-
+REQUEST_TIMEOUT = 120
+MAX_RETRIES = 3
 
 PROMPT_TEMPLATE = """
 You are a Chinese entertainment opinion classifier.
@@ -117,77 +119,6 @@ DO NOTHING;
 
 def build_prompt(comment: str) -> str:
     return PROMPT_TEMPLATE.replace("<<COMMENT>>", comment.strip())
-
-
-def call_ollama(prompt: str) -> str:
-    payload = {
-        "model": MODEL,
-        "prompt": prompt,
-        "stream": False,
-        "format": "json",     # JSON only, no extra text
-        "options": {
-            "temperature": 0.0,
-            "num_predict": 256,
-            "num_ctx": 4096,
-            "think": False,     # key：close thinking
-        },
-    }
-
-    r = requests.post(OLLAMA_URL, json=payload, timeout=120)
-    r.raise_for_status()
-    data = r.json()
-    resp = (data.get("response") or "").strip()
-
-    # if response is empty, try to read from reasoning / thinking fields (some versions of ollama may put output there when "think" is enabled)
-    if not resp:
-        for key in ("thinking", "reasoning", "reasoning_content"):
-            val = data.get(key)
-            if isinstance(val, str) and val.strip().startswith("{"):
-                resp = val.strip()
-                logging.debug("using %s field as response", key)
-                break
-
-    logging.debug("🧾 resp_head=%r", resp[:200])
-
-    if not resp:
-        raise ValueError(
-            f"ollama response empty. done_reason={data.get('done_reason')} keys={list(data.keys())}"
-        )
-
-    if not resp.lstrip().startswith("{"):
-        raise ValueError(f"ollama non-JSON response head={resp[:200]!r}")
-
-    return resp
-
-
-
-def call_ollama_with_retry(prompt: str, max_retries: int = 3) -> str:
-    last_err = None
-
-    for attempt in range(1, max_retries + 1):
-        try:
-            return call_ollama(prompt)
-
-        # network error → retry
-        except (ReadTimeout, ConnectionError) as e:
-            last_err = e
-            sleep_s = min(2 ** attempt, 8) + random.random()
-            logging.warning(
-                "Ollama network error, retry %s/%s after %.1fs: %r",
-                attempt, max_retries, sleep_s, e
-            )
-            time.sleep(sleep_s)
-
-        # empty response / abnormal JSON → retry once
-        except ValueError as e:
-            last_err = e
-            logging.warning(
-                "Ollama invalid response, retry %s/%s: %r",
-                attempt, max_retries, e
-            )
-            time.sleep(0.5)
-
-    raise last_err
 
 
 def extract_json(text: str) -> Dict[str, Any]:
@@ -383,7 +314,23 @@ def main():
                     "Calling ollama: topic_id=%s %s-%s",
                     topic_id, post_type, floor_no
                 )
-                resp_text = call_ollama_with_retry(prompt, max_retries=3)
+
+                resp_text = call_ollama_with_retry(
+                    prompt=prompt,
+                    model=MODEL,
+                    url=OLLAMA_URL,
+                    timeout=REQUEST_TIMEOUT,
+                    format_json=True,
+                    options={
+                        "temperature": 0.0,
+                        "num_predict": 256,
+                        "num_ctx": 4096,
+                        "think": False,
+                    },
+                    fallback_thinking=True,
+                    max_retries=3,
+                )
+
                 logging.debug("Raw LLM output: %s", resp_text)
 
                 # --- handle parse/normalize errors ---

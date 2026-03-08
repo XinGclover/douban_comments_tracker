@@ -77,9 +77,9 @@ This README provides a structured overview of key scripts and commands used in t
 | Steamlit Start    | `streamlit run streamlit_console/app.py`                     | Start a streamlit app                                                       | Open browser: `http://localhost:8501`
 |
 
-## Mind Map
+## System Architecture
 
-![](/images/mindmap.png)
+![](/images/architecture.png)
 
 
 ## Visualization Result

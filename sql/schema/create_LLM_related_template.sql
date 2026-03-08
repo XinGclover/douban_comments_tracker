@@ -151,3 +151,57 @@ CREATE INDEX IF NOT EXISTS ix_ai_key3
 ON public.douban_topic_post_ai (topic_id, post_type, floor_no);
 
 
+-- 2026.3.8 
+CREATE SCHEMA ai_raw;
+
+
+-- Table: ai_raw.comment_topic_labels_raw
+-- Description:
+-- This table stores LLM-generated topic classification results for Douban short comments (replies)
+-- about Chinese dramas. Each record represents the topic labeling of a single comment produced by
+-- a language model. The table keeps both structured labels (primary_topic, secondary_topics,
+-- confidence) and the raw model response for traceability and future reprocessing.
+-- DROP TABLE ai_raw.comment_topic_labels_raw
+CREATE TABLE ai_raw.comment_topic_labels_raw (
+	-- Surrogate primary key for this table.
+    id bigserial primary key,   
+	
+	-- Unique identifier of the original comment being classified.
+	-- This corresponds to fact_comments.comment_id.
+    comment_id varchar not null,
+	
+	-- The main topic of the comment predicted by the LLM.
+	-- The value must be one of the predefined topic categories:
+	-- PLOT, ACTING, CAST, PRODUCTION, RATING, PLATFORM_CAPITAL,
+	-- INFO, META_FANDOM, or OTHER.
+    primary_topic varchar,
+	
+	-- Optional list of additional topics mentioned in the comment.
+	-- Stored as a JSON array because a comment may reference multiple topics.
+	-- These topics are less central than primary_topic.
+    secondary_topics jsonb,
+	
+	-- Model-reported confidence score for the classification.
+	-- Value ranges from 0 to 1.
+    confidence numeric(5,4),
+	
+	-- Name of the language model used to generate the classification
+	-- (e.g., qwen3:4b, llama3, etc.).
+    model_name varchar not null,
+	
+	-- Version identifier of the prompt template used during classification.
+	-- This allows tracking changes in labeling behavior when prompts evolve.
+    prompt_version varchar not null,
+	
+	-- Raw JSON response returned by the language model.
+	-- Stored for debugging, auditing, and potential re-parsing.
+    raw_response text,
+    created_at timestamp default current_timestamp
+);
+
+
+ALTER TABLE ai_raw.comment_topic_labels_raw
+ADD CONSTRAINT uq_comment_topic_label_raw
+UNIQUE (comment_id, model_name, prompt_version);
+
+

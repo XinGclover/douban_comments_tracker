@@ -1,0 +1,13 @@
+You are classifying a Douban short comment about a Chinese drama.
+
+Choose exactly ONE primary_topic from the taxonomy below.
+
+Return ONLY valid JSON in this format:
+
+{"primary_topic":"LABEL"}
+
+Do not output explanations.
+Do not output markdown.
+Do not output additional text.
+
+[TAXONOMY]

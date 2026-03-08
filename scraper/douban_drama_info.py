@@ -18,17 +18,29 @@ DRAMA_URL = "https://movie.douban.com/subject/{}/"
 LIMIT = 40
 
 
+# SELECT_QUERY = """
+#     SELECT drama_id, COUNT(DISTINCT user_id) AS user_count
+#     FROM drama_collection
+#     WHERE rating = 5
+#     AND drama_id IN (SELECT drama_id FROM high_rating_dramas_from_low_rating_users)
+#     AND NOT EXISTS (
+#         SELECT 1 FROM douban_drama_info d
+#         WHERE d.drama_id = drama_collection.drama_id
+#     )
+#     GROUP BY drama_id
+#     ORDER BY user_count DESC
+#     LIMIT %s;
+#     """
+
 SELECT_QUERY = """
-    SELECT drama_id, COUNT(DISTINCT user_id) AS user_count
-    FROM drama_collection
-    WHERE rating = 5
-    AND drama_id IN (SELECT drama_id FROM high_rating_dramas_from_low_rating_users)
-    AND NOT EXISTS (
-        SELECT 1 FROM douban_drama_info d
-        WHERE d.drama_id = drama_collection.drama_id
-    )
-    GROUP BY drama_id
-    ORDER BY user_count DESC
+   SELECT *
+    FROM (
+    VALUES
+        ('36317401', 5),
+        ('36744438', 5),
+        ('35651341', 5),
+        ('36553916', 5)
+    ) AS t(drama_id, user_count)
     LIMIT %s;
     """
 
@@ -55,15 +67,24 @@ INSERT_SQL = """
 
 
 def extract_movie_stats(drama_id, url, headers=None):
-    """ Extracts movie statistics from the given Douban drama URL.
-    :param url: URL of the Douban drama page
-    :return: dict containing movie statistics such as rating people, total comments, reviews, discussions, and rating percentages
-    """
     response = requests.get(url, headers=headers, timeout=10)
+    response.raise_for_status()
+    if "sec.douban.com" in response.url:
+        logging.error("❌ Blocked by Douban anti-bot for %s", drama_id)
+        logging.error("Response url: %s", response.url)
+        logging.error("Response preview: %s", response.text[:500])
+    return None
+
     soup = BeautifulSoup(response.text, 'html.parser')
 
     name_tag = soup.select_one('span[property="v:itemreviewed"]')
-    drama_name = name_tag.text.strip() if name_tag else None
+    if not name_tag:
+        logging.error("❌ Not a valid Douban drama page for %s", drama_id)
+        logging.error("Response url: %s", response.url)
+        logging.error("Response preview: %s", response.text[:500])
+        return None
+
+    drama_name = name_tag.text.strip()
 
     year_tag = soup.select_one('span.year')
     year = year_tag.text.strip('()') if year_tag else None
@@ -87,7 +108,7 @@ def extract_movie_stats(drama_id, url, headers=None):
     rating = extract_count(soup, r'(\d+\.\d+)', 'strong[property="v:average"]')
     rating_people = extract_count(soup, r'(\d+)', 'span[property="v:votes"]')
     total_comments = extract_count(soup, r'全部\s*(\d+)\s*条', 'a[href*="comments?status=P"]')
-    total_reviews = extract_count(soup, r'全部\s*(\d+)\s*条', 'a[href="reviews"]')
+    total_reviews = extract_count(soup, r'(\d+)', 'a[href="reviews"]')
     total_discussions = extract_count(soup, r'全部\s*(\d+)\s*条', 'p.pl[align="right"]')
 
     percent_tags = soup.select('.ratings-on-weight .item .rating_per')
@@ -113,8 +134,6 @@ def extract_movie_stats(drama_id, url, headers=None):
         safe_number(total_discussions),
         datetime.now()
     )
-
-
 
 def main_loop():
     """ Main loop to fetch and insert movie statistics into the database.

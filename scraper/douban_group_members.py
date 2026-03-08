@@ -25,8 +25,7 @@ SPECIAL_GROUP_ID = 754923
 SELECT_GROUPS_SQL = """
 SELECT group_id, group_name, group_who, max_page
     FROM douban_groups
-    WHERE last_crawled_at IS NULL
-    ORDER BY group_id;
+    WHERE last_crawled_at IS NULL;
 """
 
 INSERT_MEMBER_SQL = """
@@ -133,6 +132,7 @@ def insert_member(cursor, group_id: int, member: dict) -> bool:
 
 def main():
     conn = get_db_conn()
+    logging.info("Connected to DB: %s", conn.get_dsn_parameters())
     headers = get_headers()
 
     try:
