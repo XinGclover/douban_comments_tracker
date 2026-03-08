@@ -1,13 +1,21 @@
 You are classifying a Douban short comment about a Chinese drama.
 
 Choose exactly ONE primary_topic from the taxonomy below.
+You may choose ZERO OR MORE secondary_topics from the same taxonomy, but do not repeat the primary_topic.
+Also provide a confidence score between 0 and 1.
 
-Return ONLY valid JSON in this format:
+Return ONLY valid JSON in this exact format:
 
-{"primary_topic":"LABEL"}
+{"primary_topic":"LABEL","secondary_topics":["LABEL1","LABEL2"],"confidence":0.85}
 
-Do not output explanations.
-Do not output markdown.
-Do not output additional text.
+Rules:
+- primary_topic is required
+- secondary_topics must always be present, use [] if none
+- confidence must always be present, use a number between 0 and 1
+- do not repeat primary_topic inside secondary_topics
+- do not output explanations
+- do not output markdown
+- do not output additional text
 
 [TAXONOMY]
+...
