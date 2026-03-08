@@ -25,7 +25,7 @@ SPECIAL_GROUP_ID = 754923
 SELECT_GROUPS_SQL = """
 SELECT group_id, group_name, group_who, max_page
     FROM douban_groups
-    WHERE group_id = 754923;
+    WHERE last_crawled_at IS NULL;
 """
 
 INSERT_MEMBER_SQL = """

@@ -161,13 +161,14 @@ CREATE SCHEMA ai_raw;
 -- about Chinese dramas. Each record represents the topic labeling of a single comment produced by
 -- a language model. The table keeps both structured labels (primary_topic, secondary_topics,
 -- confidence) and the raw model response for traceability and future reprocessing.
+-- DROP TABLE ai_raw.comment_topic_labels_raw
 CREATE TABLE ai_raw.comment_topic_labels_raw (
 	-- Surrogate primary key for this table.
     id bigserial primary key,   
 	
 	-- Unique identifier of the original comment being classified.
 	-- This corresponds to fact_comments.comment_id.
-    comment_id int not null,
+    comment_id varchar not null,
 	
 	-- The main topic of the comment predicted by the LLM.
 	-- The value must be one of the predefined topic categories:
@@ -198,5 +199,9 @@ CREATE TABLE ai_raw.comment_topic_labels_raw (
     created_at timestamp default current_timestamp
 );
 
+
+ALTER TABLE ai_raw.comment_topic_labels_raw
+ADD CONSTRAINT uq_comment_topic_label_raw
+UNIQUE (comment_id, model_name, prompt_version);
 
 

@@ -1,0 +1,17 @@
+PLOT = story development, pacing, plot logic, narrative structure
+
+ACTING = acting performance, line delivery, emotional expression, acting quality
+
+CAST = actor selection, casting decisions, actor-role fit, lineup
+
+PRODUCTION = cinematography, editing, costumes, props, music, visual effects, production quality
+
+RATING = Douban ratings, star scores, rating manipulation, scoring behavior
+
+PLATFORM_CAPITAL = platform promotion, PR campaigns, marketing, water army, capital influence
+
+INFO = factual information such as release date, episode count, official announcements, statistics
+
+META_FANDOM = fan wars, anti-fan behavior, comment control, reporting, fandom conflicts
+
+OTHER = comments that do not clearly belong to the categories above

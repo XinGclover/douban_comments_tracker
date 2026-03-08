@@ -13,7 +13,7 @@ from requests.exceptions import ConnectionError, ReadTimeout
 from db import get_db_conn
 from utils.logger import setup_logger
 
-LOG_PATH = Path(__file__).resolve().parent.parent / "logs" / "label_posts_with_llm.log"
+LOG_PATH = Path(__file__).resolve().parent.parent.parent / "logs" / "label_posts_with_llm.log"
 setup_logger(log_file=str(LOG_PATH))
 
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")

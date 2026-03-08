@@ -1,4 +1,13 @@
-You are labeling a Douban short comment about a Chinese drama.
+You are classifying a Douban short comment about a Chinese drama.
 
-Choose ONE primary_topic from:
-PLOT, ACTING, CAST, PRODUCTION, RATING, PLATFORM_CAPITAL, INFO, META_FANDOM, OTHER
+Choose exactly ONE primary_topic from the taxonomy below.
+
+Return ONLY valid JSON in this format:
+
+{"primary_topic":"LABEL"}
+
+Do not output explanations.
+Do not output markdown.
+Do not output additional text.
+
+[TAXONOMY]
