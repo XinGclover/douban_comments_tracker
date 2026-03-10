@@ -1,6 +1,7 @@
 import streamlit as st
 from streamlit_console.core.runner import run_cmd
 from streamlit_console.core.tasks import TASKS, CATEGORIES
+from streamlit_console.core.logs import get_log_file, tail_log
 
 st.title("▶️ Run Bash Commands")
 
@@ -40,3 +41,14 @@ if st.button("🚀 Run", type="primary"):
     with tab2:
         st.text_area("stderr", value=res.stderr, height=350)
 
+
+# show log file if exists
+log_file = get_log_file(task["cmd"])
+
+if log_file:
+    log_lines = tail_log(log_file, 10)
+
+    st.subheader(f"📄 Last 10 lines ({log_file.name})")
+    st.code("".join(log_lines))
+else:
+    st.caption("No log file detected")
