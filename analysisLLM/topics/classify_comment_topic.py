@@ -36,7 +36,7 @@ OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
 MODEL_NAME = os.getenv("OLLAMA_MODEL", "qwen3:4b")
 PROMPT_VERSION = os.getenv("PROMPT_VERSION", "v2_short_taxonomy_thinking_fallback").strip()
 
-BATCH_SIZE = int(os.getenv("BATCH_SIZE", "10"))
+BATCH_SIZE = int(os.getenv("BATCH_SIZE", "50"))
 REQUEST_TIMEOUT = 120
 MAX_RETRIES = 3
 SLEEP_BETWEEN_ITEMS = 0.3

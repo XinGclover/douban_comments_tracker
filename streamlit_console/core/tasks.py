@@ -37,9 +37,9 @@ TASKS = [
     },
     {
         "name": "🤖 LLM 标注 posts",
-        "cmd": ["uv", "run", "python", "-m", "analysisLLM.label_posts_with_llm"],
+        "cmd": ["uv", "run", "python", "-m", "analysisLLM.post_labeling.label_posts_with_llm"],
         "category": "LLM Analysis",
-        "desc": "读取 raw 表，调用本地 Ollama",
+        "desc": "读取 raw posts表，调用本地 Ollama",
     },
     {
         "name": "📊 结巴分词",
@@ -70,5 +70,11 @@ TASKS = [
         "cmd": ["airflow", "scheduler"],
         "category": "Airflow Tasks",
         "desc": "启动 Airflow Scheduler 以触发 DAGs",
+    },
+    {
+        "name": "🤖 LLM 标注 drama comments",
+        "cmd": ["uv", "run", "python", "-m", "analysisLLM.topics.classify_comment_topic"],
+        "category": "LLM Analysis",
+        "desc": "读取 dbt marts fact_comments 表，调用本地 Ollama",
     }
 ]
