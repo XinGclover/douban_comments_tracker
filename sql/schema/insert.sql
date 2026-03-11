@@ -111,3 +111,8 @@ VALUES
 (745149,'洗头小哥','李一桐',8),
 (749024,'女神日记簿','赵露思',7),
 (737330,'你才是荷包蛋','赵露思',50)
+
+
+INSERT INTO douban_groups(group_id, group_name, group_who, max_page)
+VALUES
+(745219,'茶嘻嘻看戏','丁禹兮',1848)
