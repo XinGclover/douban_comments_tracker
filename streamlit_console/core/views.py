@@ -1,4 +1,3 @@
-# streamlit_console/core/tasks.py
 from __future__ import annotations
 
 CATEGORIES = [

@@ -24,7 +24,42 @@ st.set_page_config(
     layout="wide",
 )
 
-st.title("🧰 Douban Data Console")
-st.caption("Run tasks • Browse views • Filter queries • Logs")
+import streamlit as st
+from pathlib import Path
 
-st.info("Select page from left：Run / Browse / Query / Logs")
+st.set_page_config(layout="wide")
+
+st.title("李兰迪 Gallery")
+
+st.image(
+    "images/lilandi/16th.jpg",
+    use_container_width=True
+)
+
+st.divider()
+
+image_dir = Path("images/lilandi/gallery")
+images = sorted(list(image_dir.glob("*.jpg")) + list(image_dir.glob("*.png")))
+
+st.markdown("""
+<style>
+img {
+    border-radius: 16px;
+}
+[data-testid="stImage"] {
+    margin-bottom: 1rem;
+}
+.block-container {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+cols = st.columns(4)
+
+for i, img in enumerate(images):
+    with cols[i % 4]:
+        st.image(str(img), use_container_width=True)
+

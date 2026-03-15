@@ -1,0 +1,76 @@
+from __future__ import annotations
+
+CATEGORIES = [
+    "Douban Comments",
+    "IQiyi Heat",
+    "Douban Members",
+    "Douban Topics",
+    "Douban Posts",
+    "Weibo Fans"
+]
+
+CHARTS = [
+    {
+        "name": "📈 Zhaoxuelu comments ratings daily",
+        "view": "view_zhaoxuelu_comments_rating_percentage_daily",
+        "category": "Douban Comments",
+        "desc": "Daily cumulative rating count by comment date",
+        "x": "comment_date",
+        "y": "cumulative_rating_count",
+        "chart_type": "line",
+        "color": "rating",
+        "date_col": "comment_date",
+    },
+    {
+        "name": "📊 Zhaoxuelu comments ratings distribution",
+        "view": "view_zhaoxuelu_comments_distribution",
+        "category": "Douban Comments",
+        "desc": "Rating distribution by location",
+        "x": "user_location",
+        "y": "total_count",
+        "y_cols": [
+        "rating_1_count",
+        "rating_2_count",
+        "rating_3_count",
+        "rating_4_count",
+        "rating_5_count",
+        "no_rating_count"
+        ],
+        "chart_type": "stack_bar",
+        "order_by": "total_count",
+    },
+    {
+        "name": "📈 Zhaoxuelu iQiyi heat with time",
+        "view": "view_zhaoxuelu_heat_iqiyi_with_shanghai_time",
+        "category": "IQiyi Heat",
+        "desc": "IQiyi real_time popularity value",
+        "x": "insert_time_shanghai",
+        "y": "heat_info",
+        "chart_type": "line",
+        "date_col": "insert_time_shanghai",
+    },
+    {
+        "name": "📊 Zhaoxuelu low rating users membership distribution",
+        "view": "v_lowrating_users_distribution",
+        "category": "Douban Members",
+        "desc": "Zhaoxuelu low rating(rating=1) users membership distribution",
+        "x": "user_cnt",
+        "y": "group_name",
+        "chart_type": "bar",
+        "order_by": "user_cnt"
+    },
+    {
+        "name": "📈 Weibo followers increment",
+        "view": "view_weibo_stats",
+        "category": "Weibo Fans",
+        "desc": "Weibo fans increment",
+        "x": "recorded_at",
+        "y": "followers_count",
+        "chart_type": "line",
+        "color": "user_name",
+        "date_col": "recorded_at"
+    },
+
+
+
+]
