@@ -70,7 +70,15 @@ CHARTS = [
         "color": "user_name",
         "date_col": "recorded_at"
     },
-
-
-
+    {
+        "name": "📊 Zhaoxuelu low rating users high rating dramas",
+        "view": "view_continuous_top20_dramas_per_day",
+        "category": "Douban Comments",
+        "desc": "Zhaoxuelu low rating(rating=1) users high rating dramas statistic",
+        "x": "cumulative_count",
+        "y": "drama_name",
+        "chart_type": "bar_timeline",
+        "time_col": "comment_day",
+        "order_by": "cumulative_count"
+    }
 ]

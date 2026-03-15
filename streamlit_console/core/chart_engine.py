@@ -169,6 +169,42 @@ def render_bar_chart(
     )
     st.plotly_chart(fig, use_container_width=True)
 
+def render_bar_timeline(
+    df: pd.DataFrame,
+    x_col: str,
+    y_col: str,
+    time_col: str,
+    order_by: str | None = None,
+):
+    df_plot = df.copy()
+    df_plot[time_col] = pd.to_datetime(df_plot[time_col], errors="coerce")
+
+    # People can select a specific day
+    time_values = sorted(df_plot[time_col].dropna().dt.date.unique())
+
+    if not time_values:
+        st.info("No valid timeline values found.")
+        return
+
+    selected_day = st.selectbox("Choose day", time_values)
+
+    df_plot = df_plot[df_plot[time_col].dt.date == selected_day]
+
+    if order_by and order_by in df_plot.columns:
+        df_plot = df_plot.sort_values(order_by, ascending=False)
+
+    top_n = st.slider("Top dramas", 5, min(50, len(df_plot)), min(20, len(df_plot)))
+    df_plot = df_plot.head(top_n)
+
+    fig = px.bar(
+        df_plot,
+        x=x_col,
+        y=y_col,
+        orientation="h",
+        category_orders={y_col: df_plot[y_col].tolist()[::-1]},
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
 
 def render_chart(chart_item: dict, df: pd.DataFrame):
     chart_type = chart_item.get("chart_type", "line")
@@ -200,6 +236,15 @@ def render_chart(chart_item: dict, df: pd.DataFrame):
         x_col=x_col,
         y_col=y_col,
         color_col=color_col,
+        order_by=order_by,
+    )
+
+    elif chart_type == "bar_timeline":
+      render_bar_timeline(
+        df,
+        x_col=x_col,
+        y_col=y_col,
+        time_col=chart_item.get("time_col"),
         order_by=order_by,
     )
 
