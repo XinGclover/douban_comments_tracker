@@ -112,7 +112,17 @@ VALUES
 (749024,'女神日记簿','赵露思',7),
 (737330,'你才是荷包蛋','赵露思',50)
 
-
+-- 2026.3.11
 INSERT INTO douban_groups(group_id, group_name, group_who, max_page)
 VALUES
 (745219,'茶嘻嘻看戏','丁禹兮',1848)
+
+UPDATE douban_groups
+SET group_who = '茶嘻嘻看戏'
+WHERE group_id = 745219;
+
+
+--2026.3.13
+INSERT INTO douban_groups(group_id, group_name, group_who, max_page)
+VALUES
+(759880,'呱呱乐收藏夹','敖瑞鹏',5)
