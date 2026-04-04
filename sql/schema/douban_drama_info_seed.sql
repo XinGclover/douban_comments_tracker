@@ -1,0 +1,71 @@
+INSERT INTO douban_drama_info (
+    drama_id,
+    drama_name,
+    release_year,
+    director,
+    actors,
+    release_date,
+    rating,
+    rating_people,
+    rating_1_star, rating_2_star, rating_3_star, rating_4_star, rating_5_star,
+    total_comments,
+    total_reviews,
+    total_discussions
+)
+VALUES
+(
+    '26581830',
+    '你好，旧时光',
+    2017,
+    '沙漠',
+    ARRAY['李兰迪','张新成','周澄奥'],
+    DATE '2017-11-08',
+    8.6,
+    289712,
+    0.8, 1.9, 12.9, 36.5, 47.9,
+    99605,
+    2121,
+    NULL
+),
+(
+    '36317401',
+    '朝雪录',
+    2025,
+    '李慧珠',
+    ARRAY['李兰迪','瑞鹏','余承恩','沈羽洁'],
+    DATE '2025-07-13',
+    6.3,
+    105491,
+    7.3, 17.3, 41.7, 22.2, 11.4,
+    50742,
+    592,
+    NULL
+),
+(
+    '35173643',
+    '一路朝阳',
+    2023,
+    '曹凯',
+    ARRAY['李兰迪','王阳','王菊'],
+    DATE '2023-08-14',
+    6.0,
+    41756,
+    7.5, 20.3, 45.4, 18.6, 8.2,
+    20094,
+    178,
+    NULL
+),
+(
+    '35723952',
+    '谢谢你温暖我',
+    2024,
+    '祝东宁',
+    ARRAY['李兰迪','林一'],
+    DATE '2024-03-09',
+    7.6,
+    15874,
+    3.3, 5.2, 25.0, 42.1, 24.4,
+    7056,
+    79,
+    NULL
+);

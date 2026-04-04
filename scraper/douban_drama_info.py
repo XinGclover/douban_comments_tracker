@@ -32,14 +32,30 @@ LIMIT = 40
 #     LIMIT %s;
 #     """
 
+# SELECT_QUERY = """
+#    SELECT *
+#     FROM (
+#     VALUES
+#         ('36317401', 5),
+#         ('36744438', 5),
+#         ('35651341', 5),
+#         ('36553916', 5)
+#     ) AS t(drama_id, user_count)
+#     LIMIT %s;
+#     """
+
+
 SELECT_QUERY = """
    SELECT *
     FROM (
     VALUES
-        ('36317401', 5),
-        ('36744438', 5),
-        ('35651341', 5),
-        ('36553916', 5)
+        ('26581830', 5),    --旧时光
+        ('36553916', 5),    --滤镜
+        ('34991920', 5),    --星落
+        ('36317401', 5),     --朝雪录
+        ('34900026', 5),    --流水
+        ('35173643', 5),     --一路
+        ('35723952', 5)     --温暖
     ) AS t(drama_id, user_count)
     LIMIT %s;
     """
@@ -73,7 +89,7 @@ def extract_movie_stats(drama_id, url, headers=None):
         logging.error("❌ Blocked by Douban anti-bot for %s", drama_id)
         logging.error("Response url: %s", response.url)
         logging.error("Response preview: %s", response.text[:500])
-    return None
+        return None
 
     soup = BeautifulSoup(response.text, 'html.parser')
 

@@ -5,7 +5,7 @@ import streamlit as st
 
 from streamlit_console.core.db import test_connection, select_df, execute_sql
 from streamlit_console.core.config import DB_TARGET
-from core.query_registry import CATEGORIES, QUERIES, QueryDef, QueryParam
+from streamlit_console.core.query_registry import CATEGORIES, QUERIES, QueryDef, QueryParam
 
 st.set_page_config(page_title="Query", layout="wide")
 st.title("🔎 Query Console")

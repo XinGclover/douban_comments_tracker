@@ -25,7 +25,7 @@ SPECIAL_GROUP_ID = 754923
 SELECT_GROUPS_SQL = """
 SELECT group_id, group_name, group_who, max_page
     FROM douban_groups
-    WHERE last_crawled_at IS NULL;
+    WHERE group_id=754923;
 """
 
 INSERT_MEMBER_SQL = """
@@ -148,7 +148,7 @@ def main():
                 group_failed = False
 
                 # page: 0..max_page-1  -> start: 0,36,...,(max_page-1)*36
-                for page in range(max_page):
+                for page in range(4):
                     start = page * PAGE_SIZE
                     try:
                         logging.info("📄 Group %s page %s/%s, start=%s", group_id, page + 1, max_page, start)

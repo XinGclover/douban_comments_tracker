@@ -131,7 +131,7 @@ QUERIES: List[QueryDef] = [
         FROM douban_topic_post_raw p
         JOIN other_group_topics t
         ON p.topic_id = t.topic_id
-        WHERE user_id = %(user_id)s
+        WHERE p.user_id = %(user_id)s
         """,
         params=[
             QueryParam(
@@ -139,7 +139,7 @@ QUERIES: List[QueryDef] = [
                 label="user_id",
                 type="text",
                 required=True,
-                placeholder="222984488",
+                placeholder="231450710",
                 help="Douban user ID",
             ),
         ],
@@ -360,5 +360,70 @@ QUERIES: List[QueryDef] = [
                 help="Douban topic_id 字段，某话题的ID",
             ),
         ],
+    ),
+
+    QueryDef(
+        name="📊 某用户对李兰迪主演剧的评分 vs 其他剧平均分（按 user_id）",
+        category="Douban Comments",
+        desc="查看某用户对李兰迪主演剧的逐部评分，并对比其对其他剧的平均评分",
+        sql="""
+        WITH landi_dramas AS (
+            SELECT
+                drama_id,
+                drama_name
+            FROM douban_drama_info
+            WHERE '李兰迪' = ANY(actors)
+        ),
+
+        user_landi_ratings AS (
+            SELECT
+                dc.user_id,
+                dc.drama_id,
+                ld.drama_name,
+                dc.rating AS landi_rating
+            FROM drama_collection dc
+            JOIN landi_dramas ld
+                ON ld.drama_id = dc.drama_id
+            WHERE dc.user_id = %(user_id)s
+        ),
+
+        user_other_avg AS (
+            SELECT
+                dc.user_id,
+                ROUND(AVG(dc.rating)::numeric, 2) AS avg_other_rating,
+                COUNT(*) AS other_drama_count
+            FROM drama_collection dc
+            WHERE dc.user_id = %(user_id)s
+            AND dc.drama_id NOT IN (
+                SELECT drama_id FROM landi_dramas
+            )
+            GROUP BY dc.user_id
+        )
+
+        SELECT
+            ulr.user_id,
+            ulr.drama_id,
+            ulr.drama_name,
+            ulr.landi_rating,
+            uoa.avg_other_rating,
+            uoa.other_drama_count,
+            ROUND((ulr.landi_rating - uoa.avg_other_rating)::numeric, 2) AS rating_diff_vs_other_avg
+        FROM user_landi_ratings ulr
+        LEFT JOIN user_other_avg uoa
+            ON uoa.user_id = ulr.user_id
+        ORDER BY ulr.landi_rating DESC, ulr.drama_name
+        """,
+        params=[
+            QueryParam(
+                key="user_id",
+                label="user_id",
+                type="text",
+                required=True,
+                placeholder="222984488",
+                help="Douban user ID",
+            ),
+        ],
+        default_limit=500,
+        track_id_keys=["user_id"],
     ),
 ]
