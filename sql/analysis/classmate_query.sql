@@ -45,7 +45,7 @@ where ngp.landin_rating < ar.avg_normal_rating
 
 -- right table 
 with landi_dramas as (
- select drama_id from douban_drama_info where actors::text LIKE '%李兰迪%'
+ select drama_id,drama_name from douban_drama_info where actors::text LIKE '%李兰迪%'
 ),
 no_good_ppl as (
  select lru.user_id, lru.drama_id, avg(lru.rating) as landin_rating
@@ -63,7 +63,8 @@ select ngp.*, ar.*, tpr.content_text as landin_comment
 from no_good_ppl ngp
 join avg_ratings ar on ar.user_id = ngp.user_id
 left join douban_topic_post_raw tpr on tpr.user_id = ngp.user_id
-where ngp.landin_rating < ar.avg_normal_rating
+--where ngp.landin_rating < ar.avg_normal_rating
+where ngp.user_id = '231450710'
 
 
  SELECT drama_id, COUNT(DISTINCT user_id) AS user_count
@@ -111,4 +112,50 @@ SELECT
         / NULLIF(total_group_members, 0) * 100  AS pct_are_landi_haters
 FROM group_overlap
 ORDER BY landi_haters_in_group DESC, pct_are_landi_haters DESC;
- 
+
+
+WITH landi_dramas AS (
+    SELECT
+        drama_id,
+        drama_name
+    FROM douban_drama_info
+    --WHERE '李兰迪' = ANY(actors)
+),
+
+user_landi_ratings AS (
+    SELECT
+        dc.user_id,
+        dc.drama_id,
+        ld.drama_name,
+        dc.rating AS landi_rating
+    FROM drama_collection dc
+    JOIN landi_dramas ld
+        ON ld.drama_id = dc.drama_id
+    --WHERE dc.user_id = '222984488'
+),
+
+user_other_avg AS (
+    SELECT
+        dc.user_id,
+        ROUND(AVG(dc.rating)::numeric, 2) AS avg_other_rating,
+        COUNT(*) AS other_drama_count
+    FROM drama_collection dc
+    WHERE dc.user_id = '222984488'
+      AND dc.drama_id NOT IN (
+          SELECT drama_id FROM landi_dramas
+      )
+    GROUP BY dc.user_id
+)
+
+SELECT
+    ulr.user_id,
+    ulr.drama_id,
+    ulr.drama_name,
+    ulr.landi_rating,
+    uoa.avg_other_rating,
+    uoa.other_drama_count,
+    ROUND((ulr.landi_rating - uoa.avg_other_rating)::numeric, 2) AS rating_diff_vs_other_avg
+FROM user_landi_ratings ulr
+LEFT JOIN user_other_avg uoa
+    ON uoa.user_id = ulr.user_id
+ORDER BY ulr.landi_rating DESC, ulr.drama_name

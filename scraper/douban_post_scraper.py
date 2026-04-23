@@ -37,7 +37,10 @@ SQL_GET_TOPICS = f"""
         full_time >= %s::timestamptz
         AND group_id <> ALL(%s::bigint[])
         AND key_word = ANY(%s::text[])
-        AND crawled_at IS NULL
+        AND (
+            crawled_at IS NULL
+            OR crawl_status = 'forbidden'
+        )
         AND NOT (title ILIKE ANY(%s))
     ORDER BY full_time DESC
     LIMIT %s;
@@ -325,13 +328,13 @@ def main_loop(topic_id: int):
         conn.commit()
         logging.info("✅ Marked topic_id=%s as crawled", topic_id)
 
-    except NotFoundError as e:
+    except NotFoundError:
         with conn.cursor() as cursor:
             mark_topic_status(cursor, topic_id, "not_found")
         conn.commit()
         logging.warning("🟡 Marked not_found: topic_id=%s", topic_id)
 
-    except ForbiddenError as e:
+    except ForbiddenError:
         with conn.cursor() as cursor:
             mark_topic_status(cursor, topic_id, "forbidden")
         conn.commit()
