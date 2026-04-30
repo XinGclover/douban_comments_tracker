@@ -29,12 +29,12 @@ CHARTS = [
         "x": "user_location",
         "y": "total_count",
         "y_cols": [
-        "rating_1_count",
-        "rating_2_count",
-        "rating_3_count",
-        "rating_4_count",
-        "rating_5_count",
-        "no_rating_count"
+            "rating_1_count",
+            "rating_2_count",
+            "rating_3_count",
+            "rating_4_count",
+            "rating_5_count",
+            "no_rating_count",
         ],
         "chart_type": "stack_bar",
         "order_by": "total_count",
@@ -57,7 +57,7 @@ CHARTS = [
         "x": "user_cnt",
         "y": "group_name",
         "chart_type": "bar",
-        "order_by": "user_cnt"
+        "order_by": "user_cnt",
     },
     {
         "name": "📈 Weibo followers increment",
@@ -68,7 +68,7 @@ CHARTS = [
         "y": "followers_count",
         "chart_type": "line",
         "color": "user_name",
-        "date_col": "recorded_at"
+        "date_col": "recorded_at",
     },
     {
         "name": "📊 Zhaoxuelu low rating users high rating dramas",
@@ -79,6 +79,18 @@ CHARTS = [
         "y": "drama_name",
         "chart_type": "bar_timeline",
         "time_col": "comment_day",
-        "order_by": "cumulative_count"
-    }
+        "order_by": "cumulative_count",
+    },
+    {
+        "name": "📈 Daily Landy Topic Mentions",
+        "view": "v_topic_daily_landy",
+        "category": "Douban Topics",
+        "desc": "Daily topic count for keyword 'landy', keyword '兰迪', and their combined total",
+        "x": "day",
+        "y": "topic_count",
+        "color": "keyword",
+        "chart_type": "line",
+        "date_col": "day",
+        "order_by": "day",
+    },
 ]
