@@ -6,7 +6,13 @@ from bs4 import BeautifulSoup
 
 from db import get_db_conn
 from utils.common import safe_float_percent, safe_number
-from utils.config import BASE_URL, TABLE_PREFIX, DRAMA_TITLE, COLLECT_HEADERS
+from utils.config import (
+    BASE_URL,
+    TABLE_PREFIX,
+    DRAMA_TITLE,
+    COLLECT_HEADERS,
+    DOUBAN_DRAMA_ID,
+)
 from utils.html_tools import extract_count
 from utils.logger import setup_logger
 from pathlib import Path
@@ -70,17 +76,19 @@ def insert_movie_stats(movie_stats, db_conn):
 
     sql = f"""
     INSERT INTO {TABLE_PREFIX}_comments_count (
+        source_drama_id,
         insert_time,
         rating,
         rating_people,
         rating_1_star, rating_2_star, rating_3_star, rating_4_star, rating_5_star,
         total_comments, total_reviews, total_discussions
     )
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    ON CONFLICT (insert_time) DO NOTHING;
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    ON CONFLICT (source_drama_id, insert_time) DO NOTHING;
     """
 
     params = (
+        DOUBAN_DRAMA_ID,
         insert_time,
         rating,
         rating_people,
@@ -91,7 +99,7 @@ def insert_movie_stats(movie_stats, db_conn):
         rating_5,
         total_comments,
         total_reviews,
-        total_discussions
+        total_discussions,
     )
 
     with db_conn.cursor() as cursor:

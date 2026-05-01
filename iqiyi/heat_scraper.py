@@ -7,7 +7,14 @@ from bs4 import BeautifulSoup
 
 from db import get_db_conn
 from utils.common import safe_float_percent, safe_number
-from utils.config import (DRAMA_TITLE, IQIYI_BASE_URL, IQIYI_HEADERS, TABLE_PREFIX)
+from utils.config import (
+    DOUBAN_DRAMA_ID,
+    IQIYI_DRAMA_ID,
+    DRAMA_TITLE,
+    IQIYI_BASE_URL,
+    IQIYI_HEADERS,
+    TABLE_PREFIX,
+)
 from utils.html_tools import extract_count
 from utils.logger import setup_logger
 from pathlib import Path
@@ -40,8 +47,16 @@ def insert_movie_stats(movie_stats, db_conn):
     :param conn: psycopg2 connection object
     """
     insert_query = f"""
-        INSERT INTO {TABLE_PREFIX}_heat_iqiyi (insert_time, heat_info, effect_score, hot_link)
-        VALUES (%s, %s, %s, %s)
+        INSERT INTO {TABLE_PREFIX}_heat_iqiyi (
+            source_drama_id,
+            iqiyi_id,
+            insert_time,
+            heat_info,
+            effect_score,
+            hot_link
+        )
+        VALUES (%s, %s, %s, %s, %s, %s)
+        ON CONFLICT (iqiyi_id, insert_time) DO NOTHING
         """
 
     heat_info = safe_number(movie_stats.get("heat_info"))
@@ -49,10 +64,12 @@ def insert_movie_stats(movie_stats, db_conn):
     hot_link = safe_number(movie_stats.get("hot_link"))
 
     params = (
+        DOUBAN_DRAMA_ID,
+        IQIYI_DRAMA_ID,
         datetime.now(pytz.utc),
         heat_info,
         effect_score,
-        hot_link
+        hot_link,
     )
 
     with db_conn.cursor() as cursor:

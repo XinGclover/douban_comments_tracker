@@ -473,3 +473,58 @@ SELECT
 FROM daily_max dm
 ORDER BY dm.heat_date;
 
+
+
+--topic count daily
+--DROP VIEW v_topic_daily_landy
+CREATE OR REPLACE VIEW v_topic_daily_landy AS
+WITH date_spine AS (
+    SELECT generate_series(
+        DATE '2020-01-01',
+        CURRENT_DATE,
+        INTERVAL '1 day'
+    )::date AS day
+),
+keywords AS (
+    SELECT unnest(ARRAY['landy', '兰迪']) AS keyword
+),
+daily AS (
+    SELECT
+        full_time::date AS day,
+        key_word AS keyword,
+        COUNT(*) AS topic_count
+    FROM public.other_group_topics
+    WHERE key_word IN ('landy', '兰迪')
+      AND full_time >= DATE '2020-01-01'
+    GROUP BY full_time::date, key_word
+),
+filled AS (
+    SELECT
+        d.day,
+        k.keyword,
+        COALESCE(daily.topic_count, 0) AS topic_count
+    FROM date_spine d
+    CROSS JOIN keywords k
+    LEFT JOIN daily
+        ON daily.day = d.day
+       AND daily.keyword = k.keyword
+),
+total AS (
+    SELECT
+        day,
+        'total' AS keyword,
+        SUM(topic_count) AS topic_count
+    FROM filled
+    GROUP BY day
+)
+
+SELECT *
+FROM filled
+
+UNION ALL
+
+SELECT *
+FROM total
+
+ORDER BY day, keyword;
+

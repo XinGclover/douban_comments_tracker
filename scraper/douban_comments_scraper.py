@@ -1,5 +1,4 @@
 import logging
-import time
 from datetime import datetime
 
 import psycopg2
@@ -8,7 +7,7 @@ from bs4 import BeautifulSoup
 
 from db import get_db_conn
 from utils.common import safe_sleep
-from utils.config import BASE_URL, DRAMA_TITLE, TABLE_PREFIX
+from utils.config import BASE_URL, DRAMA_TITLE, TABLE_PREFIX, DOUBAN_DRAMA_ID
 from utils.config_loader import get_headers
 from utils.html_tools import extract_href_info
 from utils.logger import setup_logger
@@ -123,12 +122,21 @@ def insert_single_comment(cursor, comment_dict):
     :return: bool, True if insert was successful, False otherwise
     """
     sql = f"""
-    INSERT INTO {TABLE_PREFIX}_comments (
-        user_id, user_name, votes, status, rating, user_location, create_time, user_comment, batch_id
-    )
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-    ON CONFLICT (user_id, create_time) DO NOTHING
-    """
+        INSERT INTO {TABLE_PREFIX}_comments (
+            source_drama_id,
+            user_id,
+            user_name,
+            votes,
+            status,
+            rating,
+            user_location,
+            create_time,
+            user_comment,
+            batch_id
+        )
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ON CONFLICT (source_drama_id, user_id, create_time) DO NOTHING
+        """
 
     try:
         rating_raw = comment_dict.get('rating')
@@ -140,15 +148,16 @@ def insert_single_comment(cursor, comment_dict):
                 logging.warning("⚠️ Invalid rating value: %s", rating_raw)
 
         params = (
-            str(comment_dict.get('user_id')).strip(),
-            str(comment_dict.get('user_name', '')).strip(),
-            int(comment_dict.get('votes', 0)),
-            str(comment_dict.get('status', '')).strip(),
+            DOUBAN_DRAMA_ID,
+            str(comment_dict.get("user_id")).strip(),
+            str(comment_dict.get("user_name", "")).strip(),
+            int(comment_dict.get("votes", 0)),
+            str(comment_dict.get("status", "")).strip(),
             rating,
-            str(comment_dict.get('location', '')).strip(),
-            comment_dict.get('time'),
-            str(comment_dict.get('comment', '')).strip(),
-            BATCH_ID
+            str(comment_dict.get("location", "")).strip(),
+            comment_dict.get("time"),
+            str(comment_dict.get("comment", "")).strip(),
+            BATCH_ID,
         )
         cursor.execute(sql, params)
         return cursor.rowcount == 1
