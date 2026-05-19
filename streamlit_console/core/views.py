@@ -88,5 +88,13 @@ VIEWS = [
         "desc": "统计已爬取的topics数量和最后爬取时间，看看哪些话题比较活跃",
         "sortable": [],
         "default_order": "created_at DESC",
-    }
+    },
+    {
+        "name": "📊 明星粉丝回帖统计 ",
+        "view": "v_topic_group_count",
+        "category": "Douban Topics",
+        "desc": "统计每个topic发帖人成分以及回帖人成分统计",
+        "sortable": [],
+        "default_order": "topic_first_reply_time DESC",
+    },
 ]

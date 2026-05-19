@@ -45,4 +45,5 @@ with DAG(
         bash_command=f'PYTHONPATH={PROJECT_PATH} python3 {PROJECT_PATH}/iqiyi/tv_rank.py'
     )
 
-    run_heat >> run_hot_search >> run_tv_rank
+    # run_heat >> run_hot_search >> run_tv_rank
+    run_heat

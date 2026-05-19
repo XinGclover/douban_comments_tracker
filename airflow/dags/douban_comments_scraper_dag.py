@@ -6,7 +6,6 @@ from pathlib import Path
 import pendulum
 from airflow import DAG
 from airflow.exceptions import AirflowSkipException
-from airflow.operators.python import PythonOperator
 from airflow.operators.bash import BashOperator
 
 DAG_DIR = Path(__file__).resolve().parent
@@ -56,15 +55,15 @@ def run_scraper_conditional():
         )
 
 with DAG(
-    dag_id='douban_comments_scraper_dag',
+    dag_id="douban_comments_scraper_dag",
     default_args=default_args,
-    description='Scheduled crawling of Douban comments',
-    #schedule_interval=timedelta(minutes=30),   # Every 30 minutes
-    schedule_interval=timedelta(hours=6),  # Every 5 hours
+    description="Scheduled crawling of Douban comments",
+    # schedule_interval=timedelta(minutes=30),  # Every 30 minutes
+    schedule_interval=timedelta(hours=5),  # Every 5 hours
     start_date=datetime(2025, 6, 26, 8, 0, 0, tzinfo=local_tz),
     catchup=False,
     max_active_runs=1,
-    tags=['douban', 'comments','zhaoxuelu'],
+    tags=["douban", "comments", "zhaoxuelu"],
 ) as dag:
 
     run_scraper =  BashOperator(

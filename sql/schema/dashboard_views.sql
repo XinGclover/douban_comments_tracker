@@ -528,3 +528,147 @@ FROM total
 
 ORDER BY day, keyword;
 
+-- 2026.5.19 topic reply_count statistic by member group
+-- DROP VIEW v_topic_group_count
+CREATE OR REPLACE VIEW v_topic_group_count AS
+WITH topic_info AS (
+    SELECT
+        p.topic_id,
+        MAX(p.topic_title) AS topic_title,
+
+        ARRAY_AGG(DISTINCT g.group_name)
+            FILTER (WHERE g.group_name IS NOT NULL) AS op_group_name,
+
+        ARRAY_AGG(DISTINCT g.group_who)
+            FILTER (WHERE g.group_who IS NOT NULL) AS op_group_who
+
+    FROM public.douban_topic_post_raw p
+
+    LEFT JOIN public.douban_group_members gm
+        ON p.user_id = gm.member_id
+
+    LEFT JOIN public.douban_groups g
+        ON gm.group_id = g.group_id
+
+    WHERE p.is_op_author = true
+
+    GROUP BY p.topic_id
+),
+
+topic_reply_time AS (
+    SELECT
+        topic_id,
+        MIN(pubtime) AS topic_first_reply_time
+    FROM public.douban_topic_post_raw
+    WHERE post_type = 'reply'
+      AND pubtime IS NOT NULL
+    GROUP BY topic_id
+),
+
+reply_total_counts AS (
+    SELECT
+        topic_id,
+        COUNT(DISTINCT user_id) AS reply_count
+    FROM public.douban_topic_post_raw
+    WHERE post_type = 'reply'
+    GROUP BY topic_id
+),
+
+reply_group_counts AS (
+    SELECT
+        p.topic_id,
+        g.group_name AS reply_group_name,
+        COUNT(DISTINCT p.user_id) AS reply_user_count
+
+    FROM public.douban_topic_post_raw p
+
+    JOIN public.douban_group_members gm
+        ON p.user_id = gm.member_id
+
+    JOIN public.douban_groups g
+        ON gm.group_id = g.group_id
+
+    WHERE p.post_type = 'reply'
+
+    GROUP BY
+        p.topic_id,
+        g.group_name
+),
+
+reply_who_counts AS (
+    SELECT
+        p.topic_id,
+        g.group_who,
+        COUNT(DISTINCT p.user_id) AS who_user_count
+
+    FROM public.douban_topic_post_raw p
+
+    JOIN public.douban_group_members gm
+        ON p.user_id = gm.member_id
+
+    JOIN public.douban_groups g
+        ON gm.group_id = g.group_id
+
+    WHERE p.post_type = 'reply'
+
+    GROUP BY
+        p.topic_id,
+        g.group_who
+),
+
+reply_group_dict AS (
+    SELECT
+        topic_id,
+
+        jsonb_object_agg(
+            reply_group_name,
+            reply_user_count
+            ORDER BY reply_user_count DESC
+        ) AS reply_group_count
+
+    FROM reply_group_counts
+
+    GROUP BY topic_id
+),
+
+reply_who_dict AS (
+    SELECT
+        topic_id,
+
+        jsonb_object_agg(
+            group_who,
+            who_user_count
+            ORDER BY who_user_count DESC
+        ) AS reply_who_count
+
+    FROM reply_who_counts
+
+    GROUP BY topic_id
+)
+
+SELECT
+    t.topic_id,
+    t.topic_title,
+    trt.topic_first_reply_time,
+    t.op_group_name,
+    t.op_group_who,
+    rtc.reply_count,
+    rg.reply_group_count,
+    rw.reply_who_count
+
+FROM topic_info t
+
+INNER JOIN topic_reply_time trt
+    ON t.topic_id = trt.topic_id
+
+LEFT JOIN reply_total_counts rtc
+    ON t.topic_id = rtc.topic_id
+
+LEFT JOIN reply_group_dict rg
+    ON t.topic_id = rg.topic_id
+
+LEFT JOIN reply_who_dict rw
+    ON t.topic_id = rw.topic_id
+
+ORDER BY
+    trt.topic_first_reply_time DESC;
